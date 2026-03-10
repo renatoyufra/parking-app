@@ -1,0 +1,33 @@
+<div class="page-min">
+  <div class="card">
+    <h1>Registro de entrada</h1>
+    <div class="date-time-container">
+      <div>24 <span>Enero</span></div>
+      <app-reloj></app-reloj>
+    </div>
+    
+    <app-entry-form></app-entry-form>
+  </div>
+
+  <div class="vehicles-list-container">
+    <h2>Vehículos Estacionados ({{ vehicles().length }})</h2>
+    
+    <div class="vehicles-grid">
+      @for (v of vehicles(); track v.id) {
+        <div class="vehicle-item-card">
+          <div class="vehicle-info">
+            <span class="type-badge" [class]="v.type">{{ v.type | titlecase }}</span>
+            <span class="plate">{{ v.plate || 'SIN PLACA' }}</span>
+            <span class="time">{{ v.checkedInAt | date:'shortTime' }}</span>
+          </div>
+          <div class="actions">
+            <button class="btn-outline secondary sm" (click)="reprintTicket(v)">Ticket</button>
+            <button class="btn-outline danger sm" (click)="checkOut(v.id)">Salida</button>
+          </div>
+        </div>
+      } @empty {
+        <div class="empty-state">No hay vehículos estacionados.</div>
+      }
+    </div>
+  </div>
+</div>

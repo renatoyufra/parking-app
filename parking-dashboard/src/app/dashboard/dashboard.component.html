@@ -1,0 +1,63 @@
+<div>
+  <h2>Ocupación</h2>
+  <div class="stats-grid">
+    <div class="card stat"><span>Espacios ocupados</span><strong>{{ total() }}</strong></div>
+    <div class="card stat"><span>Espacios disponibles</span><strong>{{ byType().auto }}</strong></div>
+    <div class="card stat"><span>Ticket por vencer</span><strong>{{ byType().camioneta }}</strong></div>
+    <div class="card stat"><span>Monto recaudado</span><strong>{{ byType().camion }}</strong></div>
+  </div>
+</div>
+
+<section class="card-container">
+  <div class="card">
+    <p>Registro de entrada rápido</p>
+    <app-entry-form></app-entry-form>
+  </div>
+  <div class="card">
+    <p>Registro de salida rápido</p>
+    <app-exit-form></app-exit-form>
+  </div>
+</section>
+
+<!-- <section class="card entry-card">
+  <h2>Registrar entrada</h2>
+  <form (ngSubmit)="checkIn()" [formGroup]="form" class="entry-form">
+    <div class="field">
+      <label for="type">Tipo de vehículo</label>
+      <select id="type" formControlName="type">
+        <option *ngFor="let t of vehicleTypes" [value]="t">{{ t | titlecase }}</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="plate">Placa (opcional)</label>
+      <input id="plate" type="text" formControlName="plate" placeholder="ABC-123" />
+    </div>
+    <button class="btn primary" type="submit">Registrar entrada</button>
+  </form>
+</section> -->
+
+<!-- <section class="card list-card">
+  <h2>Vehículos estacionados</h2>
+  <table class="table">
+    <thead>
+      <tr>
+        <th style="width:36px"></th>
+        <th>Tipo</th>
+        <th>Placa</th>
+        <th>Entrada</th>
+        <th style="width:140px">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let v of data()">
+        <td></td>
+        <td>{{ v.type | titlecase }}</td>
+        <td>{{ v.plate || '—' }}</td>
+        <td>{{ v.checkedInAt | date:'dd/MM/yyyy HH:mm' }}</td>
+        <td>
+          <button class="btn danger" (click)="checkOut(v)">Salida</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</section> -->

@@ -1,0 +1,16 @@
+<div class="page">
+  <app-sidebar [collapsed]="!sidebarOpen()"></app-sidebar>
+
+  <div class="main-column">
+    <div class="topbar">
+      <button type="button" class="menu-button" (click)="toggleSidebar()">
+        <svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+      <span class="title">Parking Dashboard</span>
+    </div>
+
+    <div class="content">
+      <router-outlet></router-outlet>
+    </div>
+  </div>
+</div>

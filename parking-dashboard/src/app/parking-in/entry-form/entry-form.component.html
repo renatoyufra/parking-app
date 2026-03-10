@@ -1,0 +1,33 @@
+<form (ngSubmit)="submit()" [formGroup]="form" class="entry-form">
+  <div class="vehicle-type-selector">
+    @for (type of vehicleTypes; track type) {
+      <label class="vehicle-card" [class.selected]="form.get('type')?.value === type">
+        <input type="radio" formControlName="type" [value]="type" class="sr-only">
+        <span class="label">{{ type | titlecase }}</span>
+      </label>
+    }
+  </div>
+  
+  <div class="form-row">
+    <div class="field">
+      <label for="plate">Placa (opcional)</label>
+      <input id="plate" type="text" formControlName="plate" placeholder="ABC-123" (blur)="checkSubscriber()" />
+    </div>
+    <button class="btn primary" type="submit" [disabled]="submitting()">Registrar</button>
+  </div>
+  
+  @if (foundSubscriber()) {
+    <div class="subscriber-alert">
+      <span class="badge">ABONADO</span>
+      <span>{{ foundSubscriber()?.name }}</span>
+    </div>
+  }
+</form>
+
+<p class="success" *ngIf="success() as msg">{{ msg }}</p>
+
+<div id="print-section">
+  @if (lastVehicle()) {
+    <app-ticket [vehicle]="lastVehicle()!"></app-ticket>
+  }
+</div>

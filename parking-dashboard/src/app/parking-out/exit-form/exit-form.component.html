@@ -1,0 +1,68 @@
+<div class="search-section">
+  <p>Escanee el código QR del ticket o ingrese el ID manualmente:</p>
+  <div class="input-row">
+    <input 
+      type="text" 
+      [(ngModel)]="qrInput" 
+      placeholder="ID del vehículo" 
+      (keyup.enter)="searchVehicle()"
+    />
+    <button class="btn primary" (click)="searchVehicle()">Buscar</button>
+  </div>
+</div>
+
+@if (error()) {
+  <p class="error-msg">{{ error() }}</p>
+}
+
+@if (foundVehicle() && exitInfo()) {
+  <div class="summary-section">
+    <div class="summary-card">
+      <div class="row">
+        <span class="label">Placa:</span>
+        <span class="value">{{ foundVehicle()?.plate || 'SIN PLACA' }}</span>
+      </div>
+      <div class="row">
+        <span class="label">Entrada:</span>
+        <span class="value">{{ foundVehicle()?.checkedInAt | date:'short' }}</span>
+      </div>
+      <div class="row">
+        <span class="label">Tiempo transcurrido:</span>
+        <span class="value">{{ exitInfo()?.duration }} minutos</span>
+      </div>
+      <div class="total-row">
+        <span class="label">TOTAL A PAGAR:</span>
+        <span class="fee">{{ currency }} {{ exitInfo()?.fee }}</span>
+      </div>
+      
+      @if (foundVehicle()?.isSubscriber) {
+        <div class="subscriber-info">
+          <span class="badge">ABONADO</span>
+          <span>Tarifa cubierta por suscripción</span>
+        </div>
+      }
+
+      <div class="actions">
+        <button class="btn secondary" (click)="reset()">Cancelar</button>
+        <button class="btn primary lg" (click)="confirmExit()">Cobrar y Salida</button>
+      </div>
+    </div>
+  </div>
+}
+
+<div id="print-section">
+  @if (foundVehicle() && exitInfo()) {
+    <div class="exit-ticket">
+      <h2>TICKET DE SALIDA</h2>
+      <hr>
+      <p><strong>PLACA:</strong> {{ foundVehicle()?.plate }}</p>
+      <p><strong>TIPO:</strong> {{ foundVehicle()?.type?.toUpperCase() }}</p>
+      <p><strong>ENTRADA:</strong> {{ foundVehicle()?.checkedInAt | date:'short' }}</p>
+      <p><strong>SALIDA:</strong> {{ now | date:'short' }}</p>
+      <p><strong>TIEMPO:</strong> {{ exitInfo()?.duration }} min</p>
+      <hr>
+      <h3 class="total">TOTAL: {{ currency }} {{ exitInfo()?.fee }}</h3>
+      <p class="footer">Gracias por su visita</p>
+    </div>
+  }
+</div>

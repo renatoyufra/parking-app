@@ -1,0 +1,43 @@
+<div class="page-container">
+  <div class="header">
+    <h1>Configuración de Tarifas</h1>
+    <p>Establece los precios por tipo de vehículo y tiempos de tolerancia.</p>
+  </div>
+
+  <form [formGroup]="ratesForm" (ngSubmit)="save()" class="rates-form">
+    <div class="rates-grid">
+      @for (type of vehicleTypes; track type) {
+        <div class="card rate-card" [formGroupName]="type">
+          <div class="card-header">
+            <span class="type-icon" [class]="type"></span>
+            <h2>{{ type | titlecase }}</h2>
+          </div>
+          
+          <div class="fields">
+            <div class="field">
+              <label>Primera Hora ({{ currency }})</label>
+              <input type="number" formControlName="firstHour" placeholder="Ej: 1000" />
+            </div>
+            
+            <div class="field">
+              <label>Horas Siguientes ({{ currency }})</label>
+              <input type="number" formControlName="secondHour" placeholder="Ej: 800" />
+            </div>
+            
+            <div class="field">
+              <label>Tolerancia (minutos)</label>
+              <input type="number" formControlName="toleranceMinutes" placeholder="Ej: 10" />
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="form-actions">
+      @if (success()) {
+        <span class="success-msg">{{ success() }}</span>
+      }
+      <button type="submit" class="btn primary lg">Guardar Cambios</button>
+    </div>
+  </form>
+</div>

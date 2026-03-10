@@ -1,0 +1,62 @@
+<div class="page-container">
+  <div class="header">
+    <h1>Abonados</h1>
+    <p>Gestión de clientes con suscripción mensual o anual.</p>
+  </div>
+
+  <div class="actions">
+    <button class="btn primary" (click)="toggleForm()">
+      {{ showForm() ? 'Cancelar' : 'Nuevo Abonado' }}
+    </button>
+  </div>
+
+  @if (showForm()) {
+    <form [formGroup]="form" (ngSubmit)="submit()" class="sub-form">
+      <div class="field">
+        <label>Nombre</label>
+        <input type="text" formControlName="name" placeholder="Nombre completo" />
+      </div>
+      <div class="field">
+        <label>Placa</label>
+        <input type="text" formControlName="plate" placeholder="ABC-123" />
+      </div>
+      <div class="field">
+        <label>Tipo</label>
+        <select formControlName="type">
+          @for (type of vehicleTypes; track type) {
+            <option [value]="type">{{ type | titlecase }}</option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <label>Inicio</label>
+        <input type="date" formControlName="startDate" />
+      </div>
+      <div class="field">
+        <label>Fin</label>
+        <input type="date" formControlName="endDate" />
+      </div>
+      <button type="submit" class="btn primary" [disabled]="form.invalid">Guardar</button>
+    </form>
+  }
+
+  <div class="grid">
+    @for (sub of subscribers(); track sub.id) {
+      <div class="card sub-card">
+        <div class="sub-header">
+          <h3>{{ sub.name }}</h3>
+          <span class="badge" [class.active]="sub.active">{{ sub.active ? 'Activo' : 'Inactivo' }}</span>
+        </div>
+        <p class="plate">{{ sub.plate }}</p>
+        <p class="type">{{ sub.type | titlecase }}</p>
+        <div class="dates">
+          <span>Desde: {{ sub.startDate | date:'dd/MM/yyyy' }}</span>
+          <span>Hasta: {{ sub.endDate | date:'dd/MM/yyyy' }}</span>
+        </div>
+        <button class="btn danger sm" (click)="delete(sub.id)">Eliminar</button>
+      </div>
+    } @empty {
+      <div class="empty-state">No hay abonados registrados.</div>
+    }
+  </div>
+</div>

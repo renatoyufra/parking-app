@@ -1,0 +1,82 @@
+<div class="page-container">
+  <div class="header">
+    <h1>Cuadre de Caja</h1>
+    <p>Resumen de ingresos y egresos del día {{ summary()?.date | date:'dd/MM/yyyy' }}</p>
+  </div>
+
+  <div class="summary-cards">
+    <div class="card income">
+      <div class="icon">💰</div>
+      <div class="info">
+        <span class="label">Ingresos</span>
+        <span class="value">{{ currency }} {{ summary()?.income | number:'1.2-2' }}</span>
+      </div>
+    </div>
+    
+    <div class="card expenses">
+      <div class="icon">💸</div>
+      <div class="info">
+        <span class="label">Gastos</span>
+        <span class="value">{{ currency }} {{ summary()?.expenses | number:'1.2-2' }}</span>
+      </div>
+    </div>
+
+    <div class="card balance" [class.negative]="(summary()?.balance || 0) < 0">
+      <div class="icon">⚖️</div>
+      <div class="info">
+        <span class="label">Balance</span>
+        <span class="value">{{ currency }} {{ summary()?.balance | number:'1.2-2' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-actions">
+    <h2>Registro de Gastos</h2>
+    <button class="btn primary" (click)="toggleForm()">
+      {{ showExpenseForm() ? 'Cancelar' : '+ Nuevo Gasto' }}
+    </button>
+  </div>
+
+  @if (showExpenseForm()) {
+    <form [formGroup]="expenseForm" (ngSubmit)="submitExpense()" class="expense-form">
+      <div class="field">
+        <label>Descripción</label>
+        <input type="text" formControlName="description" placeholder="Ej: Compra de insumos de limpieza" />
+      </div>
+      <div class="field">
+        <label>Monto ({{ currency }})</label>
+        <input type="number" formControlName="amount" placeholder="0.00" />
+      </div>
+      <button type="submit" class="btn primary" [disabled]="expenseForm.invalid">Registrar Gasto</button>
+    </form>
+  }
+
+  <div class="expenses-list">
+    @if (expenses().length > 0) {
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Hora</th>
+              <th>Descripción</th>
+              <th class="text-right">Monto</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (expense of expenses(); track expense.id) {
+              <tr>
+                <td>{{ expense.created_at | date:'HH:mm' }}</td>
+                <td>{{ expense.description }}</td>
+                <td class="text-right font-bold text-red">{{ currency }} {{ expense.amount | number:'1.2-2' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <div class="empty-state">
+        <p>No hay gastos registrados hoy.</p>
+      </div>
+    }
+  </div>
+</div>

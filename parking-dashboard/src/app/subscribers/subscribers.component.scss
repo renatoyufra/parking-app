@@ -1,0 +1,92 @@
+:host {
+  display: block;
+  padding: 2rem;
+  background: #f1f5f9;
+  min-height: 100vh;
+}
+
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: 2rem;
+  h1 { font-size: 2rem; font-weight: 700; color: #1e293b; margin-bottom: 0.5rem; }
+  p { color: #64748b; }
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 2rem;
+}
+
+.sub-form {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  display: grid;
+  gap: 1.5rem;
+  border: 1px solid #e2e8f0;
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    
+    label { font-size: 0.875rem; font-weight: 500; color: #64748b; }
+    input, select {
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+  }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.sub-card {
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  .sub-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    h3 { font-size: 1.25rem; font-weight: 600; color: #1e293b; }
+  }
+
+  .badge {
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    background: #fee2e2;
+    color: #991b1b;
+    &.active { background: #dcfce7; color: #166534; }
+  }
+
+  .plate { font-family: monospace; font-size: 1.25rem; font-weight: 700; color: #334155; }
+  .dates { font-size: 0.875rem; color: #64748b; display: flex; gap: 1rem; }
+}
+
+.btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  &.primary { background: #2563eb; color: #fff; &:hover { background: #1d4ed8; } }
+  &.danger { background: #fee2e2; color: #ef4444; &:hover { background: #fecaca; } }
+}

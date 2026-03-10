@@ -1,0 +1,44 @@
+:host {
+  display: block;
+  height: 100vh;
+  /* Variables compartidas para todo el layout y el sidebar */
+  --sidebar-bg: #20124d;
+  --sidebar-fg: #eae6ff;
+  --sidebar-border: #3b2a77;
+  --logo-bg: #7c3aed;
+  --section-title: #a99cd6;
+  --nav-hover-bg: rgba(255,255,255,0.06);
+  --nav-active-bg: rgba(255,255,255,0.12);
+  --icon-fill: #a99cd6;
+  --icon-stroke: #a99cd6;
+  --badge-bg: #ff6b6b;
+  --badge-fg: #fff;
+  --button-border: #4c3c8f;
+  --button-bg: rgba(255,255,255,0.06);
+  --button-fg: #eae6ff;
+  --button-hover-bg: rgba(255,255,255,0.12);
+  --profile-bg: rgba(255,255,255,0.06);
+  --avatar-bg: #7c3aed;
+  --email-fg: #c6b9f1;
+
+  --page-bg: #0b0b21;
+  --topbar-bg: #151538;
+  --content-bg: transparent;
+}
+
+.page {
+  height: 100%;
+  background: var(--page-bg);
+  display: grid;
+  grid-template-columns: auto 1fr;
+}
+
+.main-column { display: grid; grid-template-rows: auto 1fr; }
+.topbar { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: var(--topbar-bg); border-bottom: 1px solid #2a245a; }
+.title { font-weight: 600; color: #eae6ff; }
+
+.menu-button { width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--button-border); background: var(--button-bg); color: var(--button-fg); display: grid; place-items: center; cursor: pointer; }
+.menu-button:hover { background: var(--button-hover-bg); }
+.menu-button svg { width: 20px; height: 20px; stroke: #c6b9f1; fill: none; stroke-width: 2; }
+
+.content { padding: 16px; background: khaki; overflow: auto; }

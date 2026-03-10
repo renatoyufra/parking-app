@@ -1,0 +1,52 @@
+/* Global base styles without Angular Material */
+
+:root {
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Montserrat variable font (serving from /public/fonts/) */
+@font-face {
+  font-family: 'Montserrat';
+  src: url('/fonts/montserrat/Montserrat-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Montserrat';
+  src: url('/fonts/montserrat/Montserrat-Italic-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+:root {
+  --font-sans: 'Montserrat', system-ui, -apple-system, 'Segoe UI', Roboto,
+               'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji',
+               'Segoe UI Emoji', 'Segoe UI Symbol';
+}
+
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Optional: heading weight tweak */
+h1, h2, h3, h4, h5, h6 { font-weight: 600; }
+
+button {
+  font-family: inherit;
+}
+
+h1, h2, h3 {
+  margin: 0 0 8px 0;
+}

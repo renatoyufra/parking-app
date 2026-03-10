@@ -1,0 +1,46 @@
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Angular
+.angular/
+.cache/
+dist/
+tmp/
+out-tsc/
+bazel-out/
+test-main.js
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+
+# Print Server
+print-server/node_modules/
+print-server/ticket-sequence.json
+
+# API
+api/node_modules/
+api/parking.db
+api/.env

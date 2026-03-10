@@ -1,0 +1,31 @@
+@if (vehicle) {
+  <div class="ticket-container">
+    <div class="header">
+      <div class="logo-e">E</div>
+      <div class="business-info">
+        <div class="name">Estacionamiento Central</div>
+        <div class="address">JERONIMO SALGUERO 2922 - CABA</div>
+      </div>
+    </div>
+
+    <div class="welcome">BIENVENIDOS</div>
+
+  <div class="qr-container" *ngIf="qrSvg">
+    <div [innerHTML]="qrSvg"></div>
+    <div class="qr-fallback-id">ID: {{ vehicle.id }}</div>
+  </div>
+
+  <div class="plate">{{ vehicle.plate || 'SIN PLACA' }}</div>
+    <div class="vehicle-type">{{ vehicle.type.toUpperCase() }}</div>
+
+    <div class="entry-label">Entrada</div>
+    <div class="date-time">{{ formattedDate }}</div>
+
+    <div class="id">ID: #{{ vehicle.id.toUpperCase().slice(-4) || 'N/A' }}</div>
+
+    <div class="footer-note">LA PRIMERA HORA SE ABONA COMPLETA</div>
+    <div class="footer-small">Ticket emitido por TicketControl</div>
+    
+    <div class="dot">.</div>
+  </div>
+}

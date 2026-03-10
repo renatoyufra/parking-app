@@ -1,0 +1,110 @@
+:host { display: block; }
+
+.page-min { padding: 16px; }
+
+h1 { margin-bottom: 2rem; }
+
+.card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.search-section {
+  margin-bottom: 24px;
+  p { color: #6b7280; font-size: 0.9rem; margin-bottom: 8px; }
+  .input-row {
+    display: flex;
+    gap: 12px;
+    input {
+      flex: 1;
+      padding: 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      &:focus {
+        border-color: #2563eb;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+      }
+    }
+  }
+}
+
+.summary-section {
+  margin-top: 24px;
+  animation: slideDown 0.3s ease;
+}
+
+.summary-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24px;
+  .row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    .label { color: #64748b; font-size: 0.9rem; }
+    .value { font-weight: 600; color: #1e293b; }
+  }
+}
+
+.total-row {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed #cbd5e1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  .label { font-weight: 700; color: #1e293b; }
+  .fee { font-size: 2rem; font-weight: 800; color: #2563eb; }
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  .btn { flex: 1; }
+}
+
+.btn {
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+  &.primary { background: #2563eb; color: #fff; &:hover { background: #1d4ed8; } }
+  &.secondary { background: #fff; border-color: #d1d5db; color: #4b5563; &:hover { background: #f9fafb; } }
+  &.lg { font-size: 1.1rem; padding: 16px; }
+}
+
+.error-msg { color: #ef4444; font-weight: 500; margin: 12px 0; }
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Estilos de Impresión */
+#print-section { display: none; }
+
+@media print {
+  body * { visibility: hidden; }
+  #print-section, #print-section * { visibility: visible; }
+  #print-section {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 80mm;
+    text-align: center;
+    font-family: 'Courier New', monospace;
+    .exit-ticket { padding: 10mm; }
+    .total { font-size: 1.5rem; margin: 10px 0; }
+    .footer { font-size: 0.8rem; font-style: italic; }
+  }
+}
