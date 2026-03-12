@@ -1,7 +1,7 @@
-const express = require('express');
-const cors = require('cors');
-const db = require('./database');
-const { v4: uuidv4 } = require('uuid');
+const express = require("express");
+const cors = require("cors");
+const db = require("./database");
+const { v4: uuidv4 } = require("uuid");
 
 const app = express();
 const PORT = 4000;
@@ -12,7 +12,7 @@ app.use(express.json());
 // --- ENDPOINTS VEHÍCULOS (Estacionados) ---
 
 // 1. Obtener vehículos estacionados
-app.get('/vehicles', async (req, res) => {
+app.get("/vehicles", async (req, res) => {
     try {
         const result = await db.execute("SELECT * FROM parked_vehicles");
         res.json(result.rows);
@@ -22,34 +22,40 @@ app.get('/vehicles', async (req, res) => {
 });
 
 // 2. Registrar Entrada (Check-In)
-app.post('/vehicles/check-in', async (req, res) => {
+app.post("/vehicles/check-in", async (req, res) => {
     const { plate, type } = req.body;
     if (!type) return res.status(400).json({ error: "Type is required" });
 
-    const id = uuidv4().slice(0, 8).toUpperCase(); 
+    const id = uuidv4().slice(0, 8).toUpperCase();
 
     try {
-        // Verificar si es abonado
-        const subResult = await db.execute({
-            sql: "SELECT * FROM subscribers WHERE plate = ? AND active = 1 AND end_date >= date('now')",
-            args: [plate]
-        });
-        const isSub = subResult.rows.length > 0;
-        
+        const normalizedPlate =
+            typeof plate === "string" ? plate.trim().toUpperCase() : null;
+        let isSub = false;
+        if (normalizedPlate) {
+            const subResult = await db.execute({
+                sql: "SELECT 1 FROM subscribers WHERE UPPER(plate) = ? AND active = 1 AND end_date >= date('now') LIMIT 1",
+                args: [normalizedPlate],
+            });
+            isSub = subResult.rows.length > 0;
+        }
+
         // Hora local
-        const tzOffset = (new Date()).getTimezoneOffset() * 60000; 
-        const localISOTime = (new Date(Date.now() - tzOffset)).toISOString().slice(0, -1);
-        
+        const tzOffset = new Date().getTimezoneOffset() * 60000;
+        const localISOTime = new Date(Date.now() - tzOffset)
+            .toISOString()
+            .slice(0, -1);
+
         await db.execute({
             sql: "INSERT INTO parked_vehicles (id, plate, type, is_subscriber, entry_time) VALUES (?, ?, ?, ?, ?)",
-            args: [id, plate, type, isSub, localISOTime]
+            args: [id, normalizedPlate, type, isSub, localISOTime],
         });
 
         const row = await db.execute({
             sql: "SELECT * FROM parked_vehicles WHERE id = ?",
-            args: [id]
+            args: [id],
         });
-        
+
         res.status(201).json(row.rows[0]);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -57,31 +63,32 @@ app.post('/vehicles/check-in', async (req, res) => {
 });
 
 // 3. Registrar Salida (Check-Out / Cobro)
-app.post('/vehicles/check-out', async (req, res) => {
+app.post("/vehicles/check-out", async (req, res) => {
     const { id } = req.body;
-    
+
     try {
         const vResult = await db.execute({
             sql: "SELECT * FROM parked_vehicles WHERE id = ?",
-            args: [id]
+            args: [id],
         });
-        
-        if (vResult.rows.length === 0) return res.status(404).json({ error: "Vehicle not found" });
+
+        if (vResult.rows.length === 0)
+            return res.status(404).json({ error: "Vehicle not found" });
         const vehicle = vResult.rows[0];
 
         const now = new Date();
         const entryTime = new Date(vehicle.entry_time);
         const durationMinutes = Math.ceil((now - entryTime) / (1000 * 60));
-        
+
         // Calcular Tarifa
         const rateResult = await db.execute({
             sql: "SELECT * FROM rates WHERE vehicle_type = ?",
-            args: [vehicle.type]
+            args: [vehicle.type],
         });
         const rate = rateResult.rows[0];
 
         let totalFee = 0;
-        
+
         if (!vehicle.is_subscriber) {
             if (durationMinutes <= 60) {
                 totalFee = rate.first_hour;
@@ -89,10 +96,10 @@ app.post('/vehicles/check-out', async (req, res) => {
                 totalFee = rate.first_hour;
                 let remainingMinutes = durationMinutes - 60;
                 while (remainingMinutes > 0) {
-                        if (remainingMinutes > rate.tolerance_minutes) {
-                            totalFee += rate.second_hour;
-                        }
-                        remainingMinutes -= 60;
+                    if (remainingMinutes > rate.tolerance_minutes) {
+                        totalFee += rate.second_hour;
+                    }
+                    remainingMinutes -= 60;
                 }
             }
         }
@@ -102,21 +109,28 @@ app.post('/vehicles/check-out', async (req, res) => {
             sql: `INSERT INTO movements 
             (vehicle_id, plate, vehicle_type, entry_time, duration_minutes, amount_paid, is_subscriber) 
             VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            args: [vehicle.id, vehicle.plate, vehicle.type, vehicle.entry_time, durationMinutes, totalFee, vehicle.is_subscriber]
+            args: [
+                vehicle.id,
+                vehicle.plate,
+                vehicle.type,
+                vehicle.entry_time,
+                durationMinutes,
+                totalFee,
+                vehicle.is_subscriber,
+            ],
         });
-        
+
         // Eliminar de estacionados
         await db.execute({
             sql: "DELETE FROM parked_vehicles WHERE id = ?",
-            args: [id]
+            args: [id],
         });
 
-        res.json({ 
-            success: true, 
-            vehicle: vehicle, 
-            exitInfo: { duration: durationMinutes, fee: totalFee } 
+        res.json({
+            success: true,
+            vehicle: vehicle,
+            exitInfo: { duration: durationMinutes, fee: totalFee },
         });
-
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -124,15 +138,15 @@ app.post('/vehicles/check-out', async (req, res) => {
 
 // --- ENDPOINTS TARIFAS ---
 
-app.get('/rates', async (req, res) => {
+app.get("/rates", async (req, res) => {
     try {
         const result = await db.execute("SELECT * FROM rates");
         const ratesObj = {};
-        result.rows.forEach(r => {
+        result.rows.forEach((r) => {
             ratesObj[r.vehicle_type] = {
                 firstHour: r.first_hour,
                 secondHour: r.second_hour,
-                toleranceMinutes: r.tolerance_minutes
+                toleranceMinutes: r.tolerance_minutes,
             };
         });
         res.json(ratesObj);
@@ -141,14 +155,14 @@ app.get('/rates', async (req, res) => {
     }
 });
 
-app.put('/rates', async (req, res) => {
+app.put("/rates", async (req, res) => {
     const rates = req.body;
     try {
         for (const type of Object.keys(rates)) {
             const r = rates[type];
             await db.execute({
                 sql: "UPDATE rates SET first_hour = ?, second_hour = ?, tolerance_minutes = ? WHERE vehicle_type = ?",
-                args: [r.firstHour, r.secondHour, r.toleranceMinutes, type]
+                args: [r.firstHour, r.secondHour, r.toleranceMinutes, type],
             });
         }
         res.json({ success: true });
@@ -159,7 +173,7 @@ app.put('/rates', async (req, res) => {
 
 // --- ENDPOINTS ABONADOS ---
 
-app.get('/subscribers', async (req, res) => {
+app.get("/subscribers", async (req, res) => {
     try {
         const result = await db.execute("SELECT * FROM subscribers");
         res.json(result.rows);
@@ -168,13 +182,15 @@ app.get('/subscribers', async (req, res) => {
     }
 });
 
-app.post('/subscribers', async (req, res) => {
+app.post("/subscribers", async (req, res) => {
     const { name, plate, type, startDate, endDate } = req.body;
     const id = uuidv4();
     try {
+        const normalizedPlate =
+            typeof plate === "string" ? plate.trim().toUpperCase() : null;
         await db.execute({
             sql: "INSERT INTO subscribers (id, name, plate, vehicle_type, start_date, end_date) VALUES (?, ?, ?, ?, ?, ?)",
-            args: [id, name, plate, type, startDate, endDate]
+            args: [id, name, normalizedPlate, type, startDate, endDate],
         });
         res.status(201).json({ id, ...req.body, active: 1 });
     } catch (err) {
@@ -182,12 +198,12 @@ app.post('/subscribers', async (req, res) => {
     }
 });
 
-app.delete('/subscribers/:id', async (req, res) => {
+app.delete("/subscribers/:id", async (req, res) => {
     const { id } = req.params;
     try {
         await db.execute({
             sql: "UPDATE subscribers SET active = 0 WHERE id = ?",
-            args: [id]
+            args: [id],
         });
         res.json({ success: true });
     } catch (err) {
@@ -195,63 +211,71 @@ app.delete('/subscribers/:id', async (req, res) => {
     }
 });
 
-
 // --- ENDPOINTS GASTOS Y CIERRE ---
 
-app.get('/expenses', async (req, res) => {
+app.get("/expenses", async (req, res) => {
     try {
-        const result = await db.execute("SELECT * FROM expenses WHERE date(created_at) = date('now')");
+        const result = await db.execute(
+            "SELECT * FROM expenses WHERE date(created_at) = date('now')"
+        );
         res.json(result.rows);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-app.post('/expenses', async (req, res) => {
+app.post("/expenses", async (req, res) => {
     const { description, amount, category_id } = req.body;
     try {
         const result = await db.execute({
             sql: "INSERT INTO expenses (description, amount, category_id) VALUES (?, ?, ?)",
-            args: [description, amount, category_id]
+            args: [description, amount, category_id],
         });
-        res.status(201).json({ id: Number(result.lastInsertRowid), description, amount });
+        res.status(201).json({
+            id: Number(result.lastInsertRowid),
+            description,
+            amount,
+        });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-app.get('/daily-summary', async (req, res) => {
-    const today = new Date().toISOString().split('T')[0];
-    
+app.get("/daily-summary", async (req, res) => {
+    const today = new Date().toISOString().split("T")[0];
+
     const summary = {
         date: today,
         income: 0,
         expenses: 0,
         balance: 0,
-        movements_count: 0
+        movements_count: 0,
     };
 
     try {
         // 1. Calcular Ingresos
-        const incomeResult = await db.execute("SELECT SUM(amount_paid) as total, COUNT(*) as count FROM movements WHERE date(exit_time) = date('now')");
+        const incomeResult = await db.execute(
+            "SELECT SUM(amount_paid) as total, COUNT(*) as count FROM movements WHERE date(exit_time) = date('now')"
+        );
         if (incomeResult.rows.length > 0) {
             summary.income = incomeResult.rows[0].total || 0;
             summary.movements_count = incomeResult.rows[0].count || 0;
         }
 
         // 2. Calcular Gastos
-        const expenseResult = await db.execute("SELECT SUM(amount) as total FROM expenses WHERE date(created_at) = date('now')");
+        const expenseResult = await db.execute(
+            "SELECT SUM(amount) as total FROM expenses WHERE date(created_at) = date('now')"
+        );
         if (expenseResult.rows.length > 0) {
             summary.expenses = expenseResult.rows[0].total || 0;
         }
-        
+
         summary.balance = summary.income - summary.expenses;
         res.json(summary);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
-
 
 app.listen(PORT, () => {
     console.log(`API Server running on http://localhost:${PORT}`);

@@ -38,6 +38,16 @@ function getNextSequence() {
 const VENDOR_ID = 0x2aaf;
 const PRODUCT_ID = 0x6015;
 
+function formatDurationMinutes(durationMinutes) {
+    const total = Number(durationMinutes);
+    if (!Number.isFinite(total) || total < 0) return "0 min";
+    if (total < 60) return `${Math.round(total)} min`;
+    const hours = Math.floor(total / 60);
+    const minutes = total % 60;
+    if (minutes === 0) return `${hours} h`;
+    return `${hours} h ${String(minutes).padStart(2, "0")} min`;
+}
+
 async function printDirectToUsb(printer) {
     return new Promise((resolve, reject) => {
         const buffer = printer.getBuffer();
@@ -118,8 +128,8 @@ app.post("/print-ticket", async (req, res) => {
 
     try {
         printer.alignCenter();
-        printer.println("ESTACIONAMIENTO MR COCHE");
-        printer.println("JERONIMO SALGUERO 2922 - TACNA");
+        printer.println("ESTACIONAMIENTO");
+        printer.println("PJE KENNEDY - TACNA");
         printer.println("--------------------------------");
 
         if (type === "entry") {
@@ -149,7 +159,6 @@ app.post("/print-ticket", async (req, res) => {
             ]);
             printer.newLine();
 
-            // QR más grande ( cellSize: 10 )
             printer.alignCenter();
             try {
                 await printer.printQR(vehicle.id, {
@@ -170,12 +179,11 @@ app.post("/print-ticket", async (req, res) => {
             if (vehicle.plate) {
                 printer.setTextSize(1, 1);
                 printer.println(`PLACA: ${vehicle.plate}`);
-                printer.setTextNormal();
             }
+            printer.setTextNormal();
             printer.println(`TIPO: ${vehicle.type.toUpperCase()}`);
 
             printer.newLine();
-            printer.println("LA PRIMERA HORA SE ABONA COMPLETA");
             printer.println("Conserve este ticket para la salida");
         } else {
             printer.println("TICKET DE SALIDA");
@@ -187,7 +195,9 @@ app.post("/print-ticket", async (req, res) => {
                 `ENTRADA: ${new Date(vehicle.checkedInAt).toLocaleString()}`
             );
             printer.println(`SALIDA: ${new Date().toLocaleString()}`);
-            printer.println(`TIEMPO: ${exitInfo.duration} min`);
+            printer.println(
+                `TIEMPO: ${formatDurationMinutes(exitInfo.duration)}`
+            );
             printer.drawLine();
             printer.alignCenter();
             printer.setTextSize(1, 1);

@@ -3,7 +3,8 @@
   <div class="input-row">
     <input 
       type="text" 
-      [(ngModel)]="qrInput" 
+      [ngModel]="qrInput"
+      (ngModelChange)="qrInput = ($event || '').toUpperCase()"
       placeholder="ID del vehículo" 
       (keyup.enter)="searchVehicle()"
     />
@@ -28,7 +29,7 @@
       </div>
       <div class="row">
         <span class="label">Tiempo transcurrido:</span>
-        <span class="value">{{ exitInfo()?.duration }} minutos</span>
+        <span class="value">{{ formatDuration(exitInfo()?.duration) }}</span>
       </div>
       <div class="total-row">
         <span class="label">TOTAL A PAGAR:</span>
@@ -59,7 +60,7 @@
       <p><strong>TIPO:</strong> {{ foundVehicle()?.type?.toUpperCase() }}</p>
       <p><strong>ENTRADA:</strong> {{ foundVehicle()?.checkedInAt | date:'short' }}</p>
       <p><strong>SALIDA:</strong> {{ now | date:'short' }}</p>
-      <p><strong>TIEMPO:</strong> {{ exitInfo()?.duration }} min</p>
+      <p><strong>TIEMPO:</strong> {{ formatDuration(exitInfo()?.duration) }}</p>
       <hr>
       <h3 class="total">TOTAL: {{ currency }} {{ exitInfo()?.fee }}</h3>
       <p class="footer">Gracias por su visita</p>

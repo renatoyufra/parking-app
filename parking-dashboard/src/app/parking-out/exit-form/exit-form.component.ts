@@ -28,6 +28,15 @@ export class ExitFormComponent implements OnInit, OnDestroy {
   now = new Date();
   private routeSub?: Subscription;
 
+  formatDuration(duration?: number | null): string {
+    if (duration == null || !Number.isFinite(duration) || duration < 0) return '0 min';
+    if (duration < 60) return `${Math.round(duration)} min`;
+    const hours = Math.floor(duration / 60);
+    const minutes = duration % 60;
+    if (minutes === 0) return `${hours} h`;
+    return `${hours} h ${String(minutes).padStart(2, '0')} min`;
+  }
+
   ngOnInit(): void {
     this.routeSub = this.route.queryParams.subscribe(params => {
       const vehicleId = params['id'];
@@ -45,7 +54,9 @@ export class ExitFormComponent implements OnInit, OnDestroy {
   searchVehicle() {
     this.error.set(null);
     this.exitInfo.set(null);
-    const vehicle = this.parking.vehicles().find(v => v.id === this.qrInput.trim());
+    const id = this.qrInput.trim().toUpperCase();
+    this.qrInput = id;
+    const vehicle = this.parking.vehicles().find(v => v.id === id);
     
     if (vehicle) {
       this.foundVehicle.set(vehicle);

@@ -1,10 +1,10 @@
 <div>
   <h2>Ocupación</h2>
   <div class="stats-grid">
-    <div class="card stat"><span>Espacios ocupados</span><strong>{{ total() }}</strong></div>
-    <div class="card stat"><span>Espacios disponibles</span><strong>{{ byType().auto }}</strong></div>
-    <div class="card stat"><span>Ticket por vencer</span><strong>{{ byType().camioneta }}</strong></div>
-    <div class="card stat"><span>Monto recaudado</span><strong>{{ byType().camion }}</strong></div>
+    <div class="card stat"><span>Vehículos estacionados</span><strong>{{ total() }}</strong></div>
+    <div class="card stat"><span>Vehículos por cobrar</span><strong>{{ payableCount() }}</strong></div>
+    <div class="card stat"><span>Tickets generados</span><strong>{{ summary()?.movements_count || 0 }}</strong></div>
+    <div class="card stat"><span>Monto generado en tickets</span><strong>{{ currency }} {{ (summary()?.income || 0) | number:'1.2-2' }}</strong></div>
   </div>
 </div>
 

@@ -4,6 +4,8 @@ import { ParkingService } from '../services/parking.service';
 import { VehicleType } from '../models/parking.models';
 import { EntryFormComponent } from '../parking-in/entry-form/entry-form.component';
 import { ExitFormComponent } from '../parking-out/exit-form/exit-form.component';
+import { ExpensesService } from '../services/expenses.service';
+import { CURRENCY_SYMBOL } from '../config';
 
 @Component({
   selector: 'app-dashboard',
@@ -14,6 +16,7 @@ import { ExitFormComponent } from '../parking-out/exit-form/exit-form.component'
 })
 export class DashboardComponent {
   private parking = inject(ParkingService);
+  private expensesService = inject(ExpensesService);
 
   // Sidebar UI state without Material
   sidebarOpen = signal(true);
@@ -30,5 +33,14 @@ export class DashboardComponent {
     return result;
   });
 
+  payableCount = computed(() => this.data().filter((v) => !v.isSubscriber).length);
+
+  summary = this.expensesService.summary;
+  currency = CURRENCY_SYMBOL;
+
   displayedColumns = ['type', 'plate', 'checkedInAt', 'actions'];
+
+  constructor() {
+    this.expensesService.loadSummary();
+  }
 }

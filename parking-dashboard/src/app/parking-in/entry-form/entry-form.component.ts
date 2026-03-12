@@ -35,7 +35,7 @@ export class EntryFormComponent {
   checkSubscriber() {
     const plate = this.form.get('plate')?.value;
     if (plate) {
-      const sub = this.subService.getSubscriber(plate);
+      const sub = this.subService.getSubscriber(plate.trim().toUpperCase());
       if (sub) {
         this.foundSubscriber.set(sub);
         this.form.patchValue({ type: sub.type });
@@ -50,7 +50,7 @@ export class EntryFormComponent {
     if (!type) return;
     this.submitting.set(true);
     try {
-      const v = await this.parking.checkIn(type, plate?.trim() || undefined);
+      const v = await this.parking.checkIn(type, plate?.trim().toUpperCase() || undefined);
       this.lastVehicle.set(v);
       this.success.set(`Registrado: ${v.type.toUpperCase()} ${v.plate ?? ''}`.trim());
       this.form.patchValue({ plate: '' });

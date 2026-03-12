@@ -1,16 +1,40 @@
-const { createClient } = require('@libsql/client');
-require('dotenv').config();
+const { createClient } = require("@libsql/client");
+require("dotenv").config();
 
-const url = process.env.TURSO_DB_URL || 'file:parking.db';
 const authToken = process.env.TURSO_AUTH_TOKEN;
+const localDbUrl = process.env.LOCAL_DB_URL || "file:parking.db";
+const remoteDbUrl = process.env.TURSO_DB_URL;
+const localFirstEnabled =
+    String(process.env.TURSO_LOCAL_FIRST || "").toLowerCase() === "true" ||
+    process.env.TURSO_LOCAL_FIRST === "1";
 
-const db = createClient({
-    url,
-    authToken,
-});
+let dbConfig;
+if (localFirstEnabled && remoteDbUrl) {
+    dbConfig = {
+        url: localDbUrl,
+        authToken,
+        syncUrl: remoteDbUrl,
+        syncInterval: Number(process.env.TURSO_SYNC_INTERVAL_MS || 5000),
+    };
+} else {
+    dbConfig = {
+        url: remoteDbUrl || localDbUrl,
+        authToken,
+    };
+}
+
+const db = createClient(dbConfig);
 
 async function initDb() {
     try {
+        if (localFirstEnabled && remoteDbUrl) {
+            console.log(
+                `DB local-first habilitado: local=${localDbUrl} sync=${remoteDbUrl}`
+            );
+        } else {
+            console.log(`DB modo directo: url=${dbConfig.url}`);
+        }
+
         // 1. Tabla de Vehículos Activos (Estacionados actualmente)
         await db.execute(`CREATE TABLE IF NOT EXISTS parked_vehicles (
             id TEXT PRIMARY KEY,
@@ -30,15 +54,15 @@ async function initDb() {
 
         // Insertar tarifas por defecto si no existen
         const defaultRates = [
-            { type: 'auto', args: [1000, 800, 10] },
-            { type: 'camioneta', args: [1500, 1200, 10] },
-            { type: 'camion', args: [2500, 2000, 10] }
+            { type: "auto", args: [1000, 800, 10] },
+            { type: "camioneta", args: [1500, 1200, 10] },
+            { type: "camion", args: [2500, 2000, 10] },
         ];
-        
+
         for (const rate of defaultRates) {
             await db.execute({
                 sql: "INSERT OR IGNORE INTO rates (vehicle_type, first_hour, second_hour, tolerance_minutes) VALUES (?, ?, ?, ?)",
-                args: [rate.type, ...rate.args]
+                args: [rate.type, ...rate.args],
             });
         }
 
@@ -83,16 +107,26 @@ async function initDb() {
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(category_id) REFERENCES expense_categories(id)
         )`);
-        
+
         // 7. Configuración General
         await db.execute(`CREATE TABLE IF NOT EXISTS settings (
             key TEXT PRIMARY KEY,
             value TEXT
         )`);
-        
-        console.log('Database initialized successfully with Turso/LibSQL');
+
+        await db.execute(
+            "UPDATE subscribers SET plate = UPPER(plate) WHERE plate IS NOT NULL"
+        );
+        await db.execute(
+            "UPDATE parked_vehicles SET plate = UPPER(plate) WHERE plate IS NOT NULL"
+        );
+        await db.execute(
+            "UPDATE movements SET plate = UPPER(plate) WHERE plate IS NOT NULL"
+        );
+
+        console.log("Database initialized successfully with Turso/LibSQL");
     } catch (e) {
-        console.error('Error initializing database:', e);
+        console.error("Error initializing database:", e);
     }
 }
 

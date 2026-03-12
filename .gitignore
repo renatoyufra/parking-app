@@ -30,7 +30,9 @@ Thumbs.db
 # Environment
 .env
 .env.local
+.env.*
 .env.*.local
+!.env.example
 
 # Logs
 logs/
@@ -44,3 +46,5 @@ print-server/ticket-sequence.json
 api/node_modules/
 api/parking.db
 api/.env
+api/.env*
+!api/.env.example
