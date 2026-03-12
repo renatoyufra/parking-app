@@ -43,14 +43,25 @@ export class DailyCashReportService {
   private reportSig = signal<DailyCashReport | null>(null);
   report = this.reportSig.asReadonly();
 
+  private loadingSig = signal(false);
+  loading = this.loadingSig.asReadonly();
+
+  private errorSig = signal<string | null>(null);
+  error = this.errorSig.asReadonly();
+
   async loadReport(date?: string) {
+    this.loadingSig.set(true);
+    this.errorSig.set(null);
     try {
       const url = date ? `${API_URL}/daily-cash-report?date=${encodeURIComponent(date)}` : `${API_URL}/daily-cash-report`;
       const data = await firstValueFrom(this.http.get<DailyCashReport>(url));
       this.reportSig.set(data);
     } catch (e) {
       console.error('Error loading daily cash report', e);
+      this.errorSig.set('No se pudo cargar el reporte');
+      this.reportSig.set(null);
+    } finally {
+      this.loadingSig.set(false);
     }
   }
 }
-

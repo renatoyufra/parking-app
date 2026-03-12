@@ -18,8 +18,38 @@
 
 .actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: end;
   margin-bottom: 1rem;
+}
+
+.date-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  label { font-size: 0.875rem; font-weight: 700; color: #64748b; }
+  input {
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 1rem;
+    background: #fff;
+  }
+}
+
+.status {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  color: #334155;
+  font-weight: 700;
+
+  &.error {
+    border-color: #fecaca;
+    color: #b91c1c;
+  }
 }
 
 .btn {
@@ -88,9 +118,9 @@
 
 @media (max-width: 900px) {
   .summary { grid-template-columns: 1fr 1fr; }
+  .actions { flex-direction: column; align-items: stretch; gap: 0.75rem; }
 }
 
 @media (max-width: 560px) {
   .summary { grid-template-columns: 1fr; }
 }
-
