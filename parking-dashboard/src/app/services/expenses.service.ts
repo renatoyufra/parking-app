@@ -18,6 +18,8 @@ export interface DailySummary {
   expenses: number;
   balance: number;
   movements_count: number;
+  opening_balance: number;
+  expected_cash: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -53,6 +55,18 @@ export class ExpensesService {
     }
   }
 
+  async setOpeningBalance(openingBalance: number) {
+    try {
+      await firstValueFrom(
+        this.http.put(`${API_URL}/cash/opening`, { opening_balance: openingBalance })
+      );
+      await this.loadSummary();
+    } catch (e) {
+      console.error('Error setting opening balance', e);
+      throw e;
+    }
+  }
+
   async addExpense(expense: Omit<Expense, 'id'>) {
     try {
       const newExpense = await firstValueFrom(this.http.post<Expense>(`${API_URL}/expenses`, expense));
@@ -60,6 +74,7 @@ export class ExpensesService {
       this.loadSummary(); // Actualizar el cuadre
     } catch (e) {
       console.error('Error adding expense', e);
+      throw e;
     }
   }
 }

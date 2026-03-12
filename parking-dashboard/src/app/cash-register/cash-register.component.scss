@@ -16,6 +16,54 @@
   p { color: #64748b; }
 }
 
+.opening-form {
+  background: #fff;
+  padding: 1.25rem;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  border: 1px solid #e2e8f0;
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    label { font-size: 0.875rem; font-weight: 500; color: #64748b; }
+    input {
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 1rem;
+      &:focus { border-color: #2563eb; outline: none; }
+    }
+  }
+}
+
+.opening-summary {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  color: #334155;
+  .label { color: #64748b; font-weight: 500; }
+  .value { font-weight: 700; }
+}
+
+.form-error {
+  margin: 0 0 1rem 0;
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.form-success {
+  margin: 0 0 1rem 0;
+  color: #047857;
+  font-weight: 600;
+}
+
 .summary-cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -145,4 +193,5 @@
 @media (max-width: 768px) {
   .summary-cards { grid-template-columns: 1fr; }
   .expense-form { grid-template-columns: 1fr; }
+  .opening-form { grid-template-columns: 1fr; }
 }

@@ -114,6 +114,13 @@ async function initDb() {
             value TEXT
         )`);
 
+        await db.execute(`CREATE TABLE IF NOT EXISTS cash_openings (
+            date TEXT PRIMARY KEY,
+            opening_balance REAL NOT NULL DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
         await db.execute(
             "UPDATE subscribers SET plate = UPPER(plate) WHERE plate IS NOT NULL"
         );

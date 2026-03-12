@@ -227,15 +227,84 @@ app.get("/expenses", async (req, res) => {
 app.post("/expenses", async (req, res) => {
     const { description, amount, category_id } = req.body;
     try {
+        const desc = typeof description === "string" ? description.trim() : "";
+        const amt = Number(amount);
+        const categoryId =
+            category_id === undefined || category_id === null
+                ? null
+                : Number(category_id);
+
+        if (!desc) {
+            return res.status(400).json({ error: "description is required" });
+        }
+        if (!Number.isFinite(amt) || amt <= 0) {
+            return res.status(400).json({ error: "amount must be > 0" });
+        }
+        if (
+            categoryId !== null &&
+            (!Number.isFinite(categoryId) || categoryId < 0)
+        ) {
+            return res
+                .status(400)
+                .json({ error: "category_id must be a non-negative number" });
+        }
+
         const result = await db.execute({
             sql: "INSERT INTO expenses (description, amount, category_id) VALUES (?, ?, ?)",
-            args: [description, amount, category_id],
+            args: [desc, amt, categoryId],
         });
         res.status(201).json({
             id: Number(result.lastInsertRowid),
-            description,
-            amount,
+            description: desc,
+            amount: amt,
+            category_id: categoryId,
         });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get("/cash/opening", async (req, res) => {
+    const date = typeof req.query.date === "string" ? req.query.date : null;
+    const day = date || new Date().toISOString().split("T")[0];
+
+    try {
+        const result = await db.execute({
+            sql: "SELECT opening_balance FROM cash_openings WHERE date = ?",
+            args: [day],
+        });
+        const openingBalance =
+            result.rows.length > 0 ? result.rows[0].opening_balance || 0 : 0;
+        res.json({ date: day, opening_balance: openingBalance });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put("/cash/opening", async (req, res) => {
+    const { date, opening_balance } = req.body || {};
+    const day =
+        typeof date === "string" && date.trim().length > 0
+            ? date.trim()
+            : new Date().toISOString().split("T")[0];
+    const opening = Number(opening_balance);
+
+    if (!Number.isFinite(opening) || opening < 0) {
+        return res
+            .status(400)
+            .json({ error: "opening_balance must be a non-negative number" });
+    }
+
+    try {
+        await db.execute({
+            sql: `INSERT INTO cash_openings (date, opening_balance, updated_at)
+                  VALUES (?, ?, CURRENT_TIMESTAMP)
+                  ON CONFLICT(date) DO UPDATE SET
+                    opening_balance = excluded.opening_balance,
+                    updated_at = CURRENT_TIMESTAMP`,
+            args: [day, opening],
+        });
+        res.json({ success: true, date: day, opening_balance: opening });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -250,6 +319,8 @@ app.get("/daily-summary", async (req, res) => {
         expenses: 0,
         balance: 0,
         movements_count: 0,
+        opening_balance: 0,
+        expected_cash: 0,
     };
 
     try {
@@ -270,7 +341,17 @@ app.get("/daily-summary", async (req, res) => {
             summary.expenses = expenseResult.rows[0].total || 0;
         }
 
+        const openingResult = await db.execute({
+            sql: "SELECT opening_balance FROM cash_openings WHERE date = ?",
+            args: [today],
+        });
+        if (openingResult.rows.length > 0) {
+            summary.opening_balance =
+                openingResult.rows[0].opening_balance || 0;
+        }
+
         summary.balance = summary.income - summary.expenses;
+        summary.expected_cash = summary.opening_balance + summary.balance;
         res.json(summary);
     } catch (err) {
         res.status(500).json({ error: err.message });

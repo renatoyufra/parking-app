@@ -4,6 +4,38 @@
     <p>Resumen de ingresos y egresos del día {{ summary()?.date | date:'dd/MM/yyyy' }}</p>
   </div>
 
+  <div class="opening-form">
+    <div class="field">
+      <label>Saldo inicial de caja ({{ currency }})</label>
+      <input
+        type="number"
+        [formControl]="openingForm.controls.opening_balance"
+        placeholder="0.00"
+        (keyup.enter)="saveOpeningBalance()"
+      />
+    </div>
+    <button
+      type="button"
+      class="btn primary"
+      [disabled]="openingForm.invalid || openingSaving()"
+      (click)="saveOpeningBalance()"
+    >
+      {{ openingSaving() ? 'Guardando...' : 'Guardar saldo inicial' }}
+    </button>
+  </div>
+
+  @if (openingError()) {
+    <p class="form-error">{{ openingError() }}</p>
+  }
+  @if (openingSaved()) {
+    <p class="form-success">Saldo inicial guardado</p>
+  }
+
+  <div class="opening-summary">
+    <span class="label">Saldo esperado:</span>
+    <span class="value">{{ currency }} {{ summary()?.expected_cash | number:'1.2-2' }}</span>
+  </div>
+
   <div class="summary-cards">
     <div class="card income">
       <div class="icon">💰</div>
@@ -32,7 +64,7 @@
 
   <div class="section-actions">
     <h2>Registro de Gastos</h2>
-    <button class="btn primary" (click)="toggleForm()">
+    <button type="button" class="btn primary" (click)="toggleForm()">
       {{ showExpenseForm() ? 'Cancelar' : '+ Nuevo Gasto' }}
     </button>
   </div>
@@ -47,8 +79,17 @@
         <label>Monto ({{ currency }})</label>
         <input type="number" formControlName="amount" placeholder="0.00" />
       </div>
-      <button type="submit" class="btn primary" [disabled]="expenseForm.invalid">Registrar Gasto</button>
+      <button type="submit" class="btn primary" [disabled]="expenseForm.invalid || expenseSaving()">
+        {{ expenseSaving() ? 'Registrando...' : 'Registrar Gasto' }}
+      </button>
     </form>
+  }
+
+  @if (expenseError()) {
+    <p class="form-error">{{ expenseError() }}</p>
+  }
+  @if (expenseSaved()) {
+    <p class="form-success">Gasto registrado</p>
   }
 
   <div class="expenses-list">
