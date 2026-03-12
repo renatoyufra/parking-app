@@ -218,6 +218,114 @@ app.post("/print-ticket", async (req, res) => {
     }
 });
 
+app.post("/print-cash-report", async (req, res) => {
+    const report = req.body?.report || req.body;
+
+    let printer = new ThermalPrinter({
+        type: PrinterTypes.EPSON,
+        interface: "tcp://localhost",
+        characterSet: "SLOVENIA",
+        removeSpecialCharacters: false,
+        lineCharacter: "-",
+    });
+
+    try {
+        const day =
+            typeof report?.date === "string"
+                ? report.date
+                : new Date().toISOString().split("T")[0];
+
+        const opening = Number(report?.opening_balance) || 0;
+        const incomeTotal = Number(report?.income_total) || 0;
+        const expensesTotal = Number(report?.expenses_total) || 0;
+        const balance = Number(report?.balance) || 0;
+        const expectedCash = Number(report?.expected_cash) || opening + balance;
+
+        const movements = Array.isArray(report?.movements)
+            ? report.movements
+            : [];
+        const expenses = Array.isArray(report?.expenses) ? report.expenses : [];
+
+        const formatMoney = (value) => {
+            const n = Number(value) || 0;
+            return `S/ ${n.toFixed(2)}`;
+        };
+
+        const formatTime = (value) => {
+            const d = new Date(value);
+            if (Number.isNaN(d.getTime())) return "--:--";
+            return d.toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+            });
+        };
+
+        printer.alignCenter();
+        printer.println("ESTACIONAMIENTO");
+        printer.println("PJE KENNEDY - TACNA");
+        printer.drawLine();
+        printer.setTextSize(1, 1);
+        printer.println("CUADRE DIARIO");
+        printer.setTextNormal();
+        printer.println(day);
+        printer.drawLine();
+
+        printer.alignLeft();
+        printer.println(`SALDO INICIAL: ${formatMoney(opening)}`);
+        printer.println(`INGRESOS:      ${formatMoney(incomeTotal)}`);
+        printer.println(`GASTOS:        ${formatMoney(expensesTotal)}`);
+        printer.println(`BALANCE:       ${formatMoney(balance)}`);
+        printer.drawLine();
+        printer.setTextSize(1, 1);
+        printer.println(`SALDO ESPERADO: ${formatMoney(expectedCash)}`);
+        printer.setTextNormal();
+        printer.drawLine();
+
+        printer.alignLeft();
+        printer.println("ENTRADAS (TICKETS)");
+        printer.drawLine();
+        if (movements.length === 0) {
+            printer.println("Sin movimientos");
+        } else {
+            for (const m of movements) {
+                const amount = Number(m.amount_paid) || 0;
+                const plate = m.plate ? String(m.plate) : "SIN PLACA";
+                const time = formatTime(m.exit_time);
+                printer.println(`${time} ${plate} ${formatMoney(amount)}`);
+            }
+        }
+        printer.drawLine();
+
+        printer.alignLeft();
+        printer.println("SALIDAS (GASTOS)");
+        printer.drawLine();
+        if (expenses.length === 0) {
+            printer.println("Sin gastos");
+        } else {
+            for (const e of expenses) {
+                const amount = Number(e.amount) || 0;
+                const desc = e.description ? String(e.description) : "";
+                const time = formatTime(e.created_at);
+                const line = `${time} ${desc}`.trim();
+                printer.println(line);
+                printer.println(`${formatMoney(amount)}`);
+            }
+        }
+        printer.drawLine();
+
+        printer.alignCenter();
+        printer.println("Fin del reporte");
+        printer.cut();
+
+        await printDirectToUsb(printer);
+
+        res.send({ success: true });
+    } catch (error) {
+        console.error("Error en endpoint /print-cash-report:", error);
+        res.status(500).send({ error: error.message });
+    }
+});
+
 const PORT = 3000;
 app.listen(PORT, () =>
     console.log(`Servidor de impresión corriendo en http://localhost:${PORT}`)

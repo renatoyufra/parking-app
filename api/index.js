@@ -358,6 +358,61 @@ app.get("/daily-summary", async (req, res) => {
     }
 });
 
+app.get("/daily-cash-report", async (req, res) => {
+    const date = typeof req.query.date === "string" ? req.query.date : null;
+    const day = date || new Date().toISOString().split("T")[0];
+
+    try {
+        const openingResult = await db.execute({
+            sql: "SELECT opening_balance FROM cash_openings WHERE date = ?",
+            args: [day],
+        });
+        const openingBalance =
+            openingResult.rows.length > 0
+                ? openingResult.rows[0].opening_balance || 0
+                : 0;
+
+        const movementsResult = await db.execute({
+            sql: `SELECT id, vehicle_id, plate, vehicle_type, entry_time, exit_time, duration_minutes, amount_paid, is_subscriber, payment_method
+                  FROM movements
+                  WHERE date(exit_time) = ?
+                  ORDER BY datetime(exit_time) ASC`,
+            args: [day],
+        });
+
+        const expensesResult = await db.execute({
+            sql: `SELECT id, category_id, description, amount, created_at
+                  FROM expenses
+                  WHERE date(created_at) = ?
+                  ORDER BY datetime(created_at) ASC`,
+            args: [day],
+        });
+
+        const incomeTotal = movementsResult.rows.reduce(
+            (sum, r) => sum + (Number(r.amount_paid) || 0),
+            0
+        );
+        const expensesTotal = expensesResult.rows.reduce(
+            (sum, r) => sum + (Number(r.amount) || 0),
+            0
+        );
+        const balance = incomeTotal - expensesTotal;
+
+        res.json({
+            date: day,
+            opening_balance: openingBalance,
+            income_total: incomeTotal,
+            expenses_total: expensesTotal,
+            balance,
+            expected_cash: openingBalance + balance,
+            movements: movementsResult.rows,
+            expenses: expensesResult.rows,
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`API Server running on http://localhost:${PORT}`);
 });

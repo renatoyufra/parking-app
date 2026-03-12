@@ -6,6 +6,7 @@ import { ParkingOutComponent } from './parking-out/parking-out.component';
 import { RatesComponent } from './rates/rates.component';
 import { SubscribersComponent } from './subscribers/subscribers.component';
 import { CashRegisterComponent } from './cash-register/cash-register.component';
+import { MovementsComponent } from './movements/movements.component';
 
 export const routes: Routes = [
   {
@@ -17,7 +18,8 @@ export const routes: Routes = [
       { path: 'salida', component: ParkingOutComponent },
       { path: 'tarifas', component: RatesComponent },
       { path: 'abonados', component: SubscribersComponent },
-      { path: 'caja', component: CashRegisterComponent }
+      { path: 'caja', component: CashRegisterComponent },
+      { path: 'movimientos', component: MovementsComponent }
     ]
   }
 ];
