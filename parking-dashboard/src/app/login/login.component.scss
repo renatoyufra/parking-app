@@ -1,0 +1,57 @@
+:host {
+  display: block;
+}
+
+.page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: #0f172a;
+  padding: 2rem;
+}
+
+.card {
+  width: 100%;
+  max-width: 420px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+
+  h1 { margin: 0 0 0.5rem 0; color: #0f172a; font-size: 1.75rem; font-weight: 800; }
+  p { margin: 0 0 1.5rem 0; color: #64748b; }
+
+  form {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  label { font-size: 0.9rem; font-weight: 700; color: #334155; }
+
+  input {
+    padding: 12px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 1rem;
+    outline: none;
+    &:focus { border-color: #2563eb; }
+  }
+
+  button {
+    margin-top: 0.5rem;
+    padding: 12px 14px;
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-weight: 800;
+    cursor: pointer;
+    &:disabled { opacity: 0.6; cursor: not-allowed; }
+  }
+}
+
+.error {
+  color: #b91c1c;
+  font-weight: 700;
+}
+

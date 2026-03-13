@@ -1,6 +1,8 @@
-import { Injectable, signal, inject } from '@angular/core';
+import { Injectable, signal, inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { AuthService } from './auth.service';
 
 const API_URL = 'http://localhost:4000';
 
@@ -25,6 +27,8 @@ export interface DailySummary {
 @Injectable({ providedIn: 'root' })
 export class ExpensesService {
   private http = inject(HttpClient);
+  private auth = inject(AuthService);
+  private platformId = inject(PLATFORM_ID);
   
   private expensesSig = signal<Expense[]>([]);
   expenses = this.expensesSig.asReadonly();
@@ -33,11 +37,14 @@ export class ExpensesService {
   summary = this.summarySig.asReadonly();
 
   constructor() {
-    this.loadExpenses();
-    this.loadSummary();
+    if (isPlatformBrowser(this.platformId) && this.auth.isAuthenticated()) {
+      this.loadExpenses();
+      this.loadSummary();
+    }
   }
 
   async loadExpenses() {
+    if (!isPlatformBrowser(this.platformId) || !this.auth.isAuthenticated()) return;
     try {
       const data = await firstValueFrom(this.http.get<Expense[]>(`${API_URL}/expenses`));
       this.expensesSig.set(data);
@@ -47,6 +54,7 @@ export class ExpensesService {
   }
 
   async loadSummary() {
+    if (!isPlatformBrowser(this.platformId) || !this.auth.isAuthenticated()) return;
     try {
       const data = await firstValueFrom(this.http.get<DailySummary>(`${API_URL}/daily-summary`));
       this.summarySig.set(data);

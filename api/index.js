@@ -2,12 +2,144 @@ const express = require("express");
 const cors = require("cors");
 const db = require("./database");
 const { v4: uuidv4 } = require("uuid");
+const crypto = require("crypto");
+require("dotenv").config();
 
 const app = express();
 const PORT = 4000;
 
 app.use(cors());
 app.use(express.json());
+
+const AUTH_SECRET = process.env.AUTH_SECRET || "mr-coche-auth-secret";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "1234";
+
+function base64UrlEncode(input) {
+    return Buffer.from(input)
+        .toString("base64")
+        .replace(/=/g, "")
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_");
+}
+
+function base64UrlDecode(input) {
+    const normalized = input.replace(/-/g, "+").replace(/_/g, "/");
+    const pad =
+        normalized.length % 4 ? "=".repeat(4 - (normalized.length % 4)) : "";
+    return Buffer.from(normalized + pad, "base64");
+}
+
+function sign(payload) {
+    return base64UrlEncode(
+        crypto.createHmac("sha256", AUTH_SECRET).update(payload).digest()
+    );
+}
+
+function createToken() {
+    const now = Math.floor(Date.now() / 1000);
+    const payload = JSON.stringify({
+        sub: "admin",
+        iat: now,
+        exp: now + 60 * 60 * 24,
+        nonce: crypto.randomBytes(16).toString("hex"),
+    });
+    const payloadPart = base64UrlEncode(payload);
+    const signaturePart = sign(payloadPart);
+    return `${payloadPart}.${signaturePart}`;
+}
+
+function verifyToken(token) {
+    if (typeof token !== "string" || !token.includes(".")) return null;
+    const [payloadPart, signaturePart] = token.split(".", 2);
+    if (!payloadPart || !signaturePart) return null;
+    const expected = sign(payloadPart);
+    const ok =
+        expected.length === signaturePart.length &&
+        crypto.timingSafeEqual(
+            Buffer.from(expected),
+            Buffer.from(signaturePart)
+        );
+    if (!ok) return null;
+
+    try {
+        const payload = JSON.parse(
+            base64UrlDecode(payloadPart).toString("utf8")
+        );
+        const now = Math.floor(Date.now() / 1000);
+        if (typeof payload?.exp !== "number" || payload.exp < now) return null;
+        return payload;
+    } catch {
+        return null;
+    }
+}
+
+function hashPassword(password, saltHex) {
+    const salt = Buffer.from(saltHex, "hex");
+    return crypto
+        .pbkdf2Sync(String(password), salt, 100000, 32, "sha256")
+        .toString("hex");
+}
+
+async function getSetting(key) {
+    const result = await db.execute({
+        sql: "SELECT value FROM settings WHERE key = ?",
+        args: [key],
+    });
+    return result.rows.length > 0 ? result.rows[0].value : null;
+}
+
+async function setSetting(key, value) {
+    await db.execute({
+        sql: `INSERT INTO settings (key, value) VALUES (?, ?)
+              ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+        args: [key, value],
+    });
+}
+
+async function ensureAuthInitialized() {
+    const salt = await getSetting("auth_salt");
+    const hash = await getSetting("auth_hash");
+    if (salt && hash) return;
+    const newSalt = crypto.randomBytes(16).toString("hex");
+    const newHash = hashPassword(ADMIN_PASSWORD, newSalt);
+    await setSetting("auth_salt", newSalt);
+    await setSetting("auth_hash", newHash);
+}
+
+app.use(async (req, res, next) => {
+    if (req.method === "OPTIONS") return next();
+    if (req.path === "/auth/login") return next();
+
+    const auth = req.headers.authorization;
+    const token =
+        typeof auth === "string" && auth.startsWith("Bearer ")
+            ? auth.slice("Bearer ".length)
+            : null;
+    const payload = token ? verifyToken(token) : null;
+    if (!payload) return res.status(401).json({ error: "Unauthorized" });
+    next();
+});
+
+app.post("/auth/login", async (req, res) => {
+    const { password } = req.body || {};
+    try {
+        await ensureAuthInitialized();
+        const salt = await getSetting("auth_salt");
+        const hash = await getSetting("auth_hash");
+        if (!salt || !hash)
+            return res.status(500).json({ error: "Auth not initialized" });
+
+        const computed = hashPassword(String(password || ""), String(salt));
+        const ok =
+            computed.length === hash.length &&
+            crypto.timingSafeEqual(Buffer.from(computed), Buffer.from(hash));
+        if (!ok) return res.status(401).json({ error: "Invalid credentials" });
+
+        res.json({ token: createToken() });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
 // --- ENDPOINTS VEHÍCULOS (Estacionados) ---
 

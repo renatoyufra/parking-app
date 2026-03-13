@@ -7,11 +7,15 @@ import { RatesComponent } from './rates/rates.component';
 import { SubscribersComponent } from './subscribers/subscribers.component';
 import { CashRegisterComponent } from './cash-register/cash-register.component';
 import { MovementsComponent } from './movements/movements.component';
+import { LoginComponent } from './login/login.component';
+import { authGuard } from './services/auth.guard';
 
 export const routes: Routes = [
+  { path: 'login', component: LoginComponent },
   {
     path: '',
     component: LayoutComponent,
+    canMatch: [authGuard],
     children: [
       { path: '', component: DashboardComponent },
       { path: 'registro', component: ParkingInComponent },

@@ -1,22 +1,29 @@
-import { Injectable, signal, inject } from '@angular/core';
+import { Injectable, signal, inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Subscriber, VehicleType } from '../models/parking.models';
 import { firstValueFrom } from 'rxjs';
+import { AuthService } from './auth.service';
 
 const API_URL = 'http://localhost:4000';
 
 @Injectable({ providedIn: 'root' })
 export class SubscribersService {
   private http = inject(HttpClient);
+  private auth = inject(AuthService);
+  private platformId = inject(PLATFORM_ID);
   
   private subscribersSig = signal<Subscriber[]>([]);
   subscribers = this.subscribersSig.asReadonly();
 
   constructor() {
-    this.loadSubscribers();
+    if (isPlatformBrowser(this.platformId) && this.auth.isAuthenticated()) {
+      this.loadSubscribers();
+    }
   }
 
   async loadSubscribers() {
+    if (!isPlatformBrowser(this.platformId) || !this.auth.isAuthenticated()) return;
     try {
       const subs = await firstValueFrom(this.http.get<Subscriber[]>(`${API_URL}/subscribers`));
       this.subscribersSig.set(subs);
@@ -59,4 +66,3 @@ export class SubscribersService {
     return !!this.getSubscriber(plate);
   }
 }
-

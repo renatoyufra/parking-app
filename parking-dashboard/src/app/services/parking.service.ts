@@ -1,7 +1,9 @@
-import { Injectable, signal, inject } from '@angular/core';
+import { Injectable, signal, inject, PLATFORM_ID } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Vehicle, VehicleType, VehicleRates } from '../models/parking.models';
 import { firstValueFrom } from 'rxjs';
+import { AuthService } from './auth.service';
+import { isPlatformBrowser } from '@angular/common';
 
 const API_URL = 'http://localhost:4000';
 
@@ -14,6 +16,8 @@ const DEFAULT_RATES: VehicleRates = {
 @Injectable({ providedIn: 'root' })
 export class ParkingService {
   private http = inject(HttpClient);
+  private auth = inject(AuthService);
+  private platformId = inject(PLATFORM_ID);
   
   private vehiclesSig = signal<Vehicle[]>([]);
   private ratesSig = signal<VehicleRates>(DEFAULT_RATES);
@@ -22,8 +26,10 @@ export class ParkingService {
   rates = this.ratesSig.asReadonly();
 
   constructor() {
-    this.loadVehicles();
-    this.loadRates();
+    if (isPlatformBrowser(this.platformId) && this.auth.isAuthenticated()) {
+      this.loadVehicles();
+      this.loadRates();
+    }
   }
 
   // Helper para transformar snake_case (DB) a camelCase (Frontend)
@@ -40,6 +46,7 @@ export class ParkingService {
   }
 
   async loadVehicles() {
+    if (!isPlatformBrowser(this.platformId) || !this.auth.isAuthenticated()) return;
     try {
       const rawVehicles = await firstValueFrom(this.http.get<any[]>(`${API_URL}/vehicles`));
       const vehicles = rawVehicles.map(v => this.mapVehicle(v));
@@ -50,6 +57,7 @@ export class ParkingService {
   }
 
   async loadRates() {
+    if (!isPlatformBrowser(this.platformId) || !this.auth.isAuthenticated()) return;
     try {
       const rates = await firstValueFrom(this.http.get<VehicleRates>(`${API_URL}/rates`));
       if (rates && Object.keys(rates).length > 0) {
