@@ -7,7 +7,25 @@ const fs = require("fs");
 const path = require("path");
 
 const app = express();
-app.use(cors());
+const allowedOrigins = new Set([
+    "http://localhost:4200",
+    "http://127.0.0.1:4200",
+    "http://localhost:4000",
+    "http://127.0.0.1:4000",
+]);
+app.use(
+    cors({
+        origin: (origin, callback) => {
+            if (!origin) return callback(null, true);
+            if (allowedOrigins.has(origin)) return callback(null, true);
+            return callback(null, true);
+        },
+        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization"],
+        optionsSuccessStatus: 204,
+    })
+);
+app.options(/.*/, cors());
 app.use(bodyParser.json());
 
 // --- Persistencia del Correlativo ---

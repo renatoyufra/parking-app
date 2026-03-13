@@ -8,7 +8,26 @@ require("dotenv").config();
 const app = express();
 const PORT = 4000;
 
-app.use(cors());
+const allowedOrigins = new Set([
+    "http://localhost:4200",
+    "http://127.0.0.1:4200",
+    "http://localhost:4000",
+    "http://127.0.0.1:4000",
+]);
+
+app.use(
+    cors({
+        origin: (origin, callback) => {
+            if (!origin) return callback(null, true);
+            if (allowedOrigins.has(origin)) return callback(null, true);
+            return callback(null, true);
+        },
+        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization"],
+        optionsSuccessStatus: 204,
+    })
+);
+app.options(/.*/, cors());
 app.use(express.json());
 
 const AUTH_SECRET = process.env.AUTH_SECRET || "mr-coche-auth-secret";
