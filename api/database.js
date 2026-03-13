@@ -7,9 +7,14 @@ const remoteDbUrl = process.env.TURSO_DB_URL;
 const localFirstEnabled =
     String(process.env.TURSO_LOCAL_FIRST || "").toLowerCase() === "true" ||
     process.env.TURSO_LOCAL_FIRST === "1";
+const offlineEnabled =
+    String(process.env.TURSO_OFFLINE || "").toLowerCase() === "true" ||
+    process.env.TURSO_OFFLINE === "1";
 
 let dbConfig;
-if (localFirstEnabled && remoteDbUrl) {
+if (offlineEnabled) {
+    dbConfig = { url: localDbUrl };
+} else if (localFirstEnabled && remoteDbUrl) {
     dbConfig = {
         url: localDbUrl,
         authToken,
@@ -23,11 +28,17 @@ if (localFirstEnabled && remoteDbUrl) {
     };
 }
 
-const db = createClient(dbConfig);
+let client = createClient(dbConfig);
+const db = {
+    execute: (...args) => client.execute(...args),
+};
+let didFallbackToLocal = false;
 
 async function initDb() {
     try {
-        if (localFirstEnabled && remoteDbUrl) {
+        if (offlineEnabled) {
+            console.log(`DB modo offline: url=${localDbUrl}`);
+        } else if (localFirstEnabled && remoteDbUrl) {
             console.log(
                 `DB local-first habilitado: local=${localDbUrl} sync=${remoteDbUrl}`
             );
@@ -133,6 +144,22 @@ async function initDb() {
 
         console.log("Database initialized successfully with Turso/LibSQL");
     } catch (e) {
+        const msg = String(e?.message || "");
+        const isTlsIssuer =
+            msg.toLowerCase().includes("invalid peer certificate") ||
+            msg.toLowerCase().includes("unknownissuer");
+        if (
+            !offlineEnabled &&
+            !didFallbackToLocal &&
+            (remoteDbUrl || dbConfig.syncUrl) &&
+            isTlsIssuer
+        ) {
+            didFallbackToLocal = true;
+            dbConfig = { url: localDbUrl };
+            client = createClient(dbConfig);
+            await initDb();
+            return;
+        }
         console.error("Error initializing database:", e);
     }
 }
