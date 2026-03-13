@@ -3,7 +3,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { SafeHtml } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { Vehicle } from '../../models/parking.models';
-import QRCode from 'qrcode-svg';
+// import QRCode from 'qrcode-svg';
 
 @Component({
   selector: 'app-ticket',
@@ -19,12 +19,12 @@ export class TicketComponent implements OnChanges {
   constructor(private sanitizer: DomSanitizer) {}
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['vehicle'] && this.vehicle) {
+   /*  if (changes['vehicle'] && this.vehicle) {
       this.generateQr();
-    }
+    } */
   }
 
-  generateQr() {
+  /* generateQr() {
     const qr = new QRCode({
       content: this.vehicle.id,
       padding: 0,
@@ -35,7 +35,7 @@ export class TicketComponent implements OnChanges {
       ecl: "M"
     });
     this.qrSvg = this.sanitizer.bypassSecurityTrustHtml(qr.svg());
-  }
+  } */
 
   get formattedDate(): string {
     const d = this.vehicle.checkedInAt;
