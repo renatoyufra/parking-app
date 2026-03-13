@@ -26,8 +26,7 @@ Start-NodeProcess -WorkingDirectory $printServerDir -Title 'MR COCHE - PRINT SER
 
 $distServer = Join-Path $dashboardDir 'dist\parking-dashboard\server\server.mjs'
 if (Test-Path $distServer) {
-  Start-NodeProcess -WorkingDirectory $dashboardDir -Title 'MR COCHE - DASHBOARD (SSR)' -Command 'node .\dist\parking-dashboard\server\server.mjs'
+  Start-NodeProcess -WorkingDirectory $dashboardDir -Title 'MR COCHE - DASHBOARD (SSR)' -Command '$env:PORT=4200; node .\dist\parking-dashboard\server\server.mjs'
 } else {
-  Start-NodeProcess -WorkingDirectory $dashboardDir -Title 'MR COCHE - DASHBOARD (DEV)' -Command 'npm run start'
+  Start-NodeProcess -WorkingDirectory $dashboardDir -Title 'MR COCHE - DASHBOARD (DEV)' -Command 'npm run start -- --port 4200'
 }
-

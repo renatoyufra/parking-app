@@ -22,8 +22,7 @@ Esto levanta:
 - API: `http://localhost:4000`
 - Print Server: `http://localhost:3000`
 - Dashboard:
-  - Si existe `dist\parking-dashboard\server\server.mjs` levanta SSR.
-  - Si no existe, levanta `ng serve` (modo dev).
+  - SSR/Dev en `http://localhost:4200` (evita conflicto con la API).
 
 ### Opción B: carpeta “Inicio” (Startup folder)
 
@@ -38,4 +37,3 @@ Nota: esta opción suele requerir que el usuario inicie sesión.
 1. En `parking-dashboard`, ejecutar una vez:
    - `npm run build`
 2. En los siguientes reinicios, el script detectará el build y usará SSR.
-
