@@ -4,19 +4,24 @@ import { ParkingService } from '../services/parking.service';
 import { VehicleType } from '../models/parking.models';
 import { EntryFormComponent } from '../parking-in/entry-form/entry-form.component';
 import { ExitFormComponent } from '../parking-out/exit-form/exit-form.component';
+import { ConfirmModalComponent } from '../shared/components/confirm-modal/confirm-modal.component';
 import { ExpensesService } from '../services/expenses.service';
 import { CURRENCY_SYMBOL } from '../config';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, EntryFormComponent, ExitFormComponent],
+  imports: [CommonModule, EntryFormComponent, ExitFormComponent, ConfirmModalComponent],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
 })
 export class DashboardComponent {
   private parking = inject(ParkingService);
   private expensesService = inject(ExpensesService);
+
+  // Modal state
+  showConfirmDelete = signal(false);
+  vehicleToDelete = signal<string | null>(null);
 
   // Sidebar UI state without Material
   sidebarOpen = signal(true);
@@ -42,9 +47,21 @@ export class DashboardComponent {
     this.expensesService.loadSummary();
   }
 
-  async deleteVehicle(id: string) {
-    if (confirm('¿Estás seguro de eliminar este vehículo? No se registrará salida ni cobro.')) {
+  async requestDeleteVehicle(id: string) {
+    this.vehicleToDelete.set(id);
+    this.showConfirmDelete.set(true);
+  }
+
+  async confirmDeleteVehicle() {
+    const id = this.vehicleToDelete();
+    if (id) {
       await this.parking.deleteVehicle(id);
     }
+    this.closeModal();
+  }
+
+  closeModal() {
+    this.showConfirmDelete.set(false);
+    this.vehicleToDelete.set(null);
   }
 }

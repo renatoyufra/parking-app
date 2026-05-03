@@ -4,13 +4,14 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { DailyCashReportService } from '../services/daily-cash-report.service';
 import { PrintService } from '../services/print.service';
 import { ExpensesService } from '../services/expenses.service';
+import { ConfirmModalComponent } from '../shared/components/confirm-modal/confirm-modal.component';
 import { CURRENCY_SYMBOL } from '../config';
 import { DurationPipe } from '../pipes/duration.pipe';
 
 @Component({
   selector: 'app-movements',
   standalone: true,
-  imports: [CommonModule, DurationPipe],
+  imports: [CommonModule, DurationPipe, ConfirmModalComponent],
   templateUrl: './movements.component.html',
   styleUrls: ['./movements.component.scss']
 })
@@ -28,6 +29,10 @@ export class MovementsComponent implements OnInit {
   error = this.reportService.error;
   printing = signal(false);
   selectedDate = signal<string>('');
+
+  // Modal state
+  showConfirmDelete = signal(false);
+  itemToDelete = signal<{ id: number, type: 'movement' | 'expense' } | null>(null);
 
   ngOnInit(): void {
     if (isPlatformBrowser(this.platformId)) {
@@ -69,17 +74,32 @@ export class MovementsComponent implements OnInit {
     }
   }
 
-  async deleteMovement(id: number) {
-    if (confirm('¿Estás seguro de eliminar este registro? Se borrará de la contabilidad.')) {
-      await this.reportService.deleteMovement(id);
-    }
+  requestDeleteMovement(id: number) {
+    this.itemToDelete.set({ id, type: 'movement' });
+    this.showConfirmDelete.set(true);
   }
 
-  async deleteExpense(id: number) {
-    if (confirm('¿Estás seguro de eliminar este gasto? Se borrará de la contabilidad.')) {
-      await this.expensesService.deleteExpense(id);
-      this.loadForSelectedDate(); // Recargar reporte para actualizar totales
+  requestDeleteExpense(id: number) {
+    this.itemToDelete.set({ id, type: 'expense' });
+    this.showConfirmDelete.set(true);
+  }
+
+  async confirmDelete() {
+    const item = this.itemToDelete();
+    if (!item) return;
+
+    if (item.type === 'movement') {
+      await this.reportService.deleteMovement(item.id);
+    } else {
+      await this.expensesService.deleteExpense(item.id);
+      this.loadForSelectedDate();
     }
+    this.closeModal();
+  }
+
+  closeModal() {
+    this.showConfirmDelete.set(false);
+    this.itemToDelete.set(null);
   }
 
   asTime(value?: string | null): string {

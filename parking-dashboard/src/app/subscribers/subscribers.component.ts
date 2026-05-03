@@ -2,12 +2,13 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { SubscribersService } from '../services/subscribers.service';
+import { ConfirmModalComponent } from '../shared/components/confirm-modal/confirm-modal.component';
 import { VehicleType } from '../models/parking.models';
 
 @Component({
   selector: 'app-subscribers',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, ConfirmModalComponent],
   templateUrl: './subscribers.component.html',
   styleUrls: ['./subscribers.component.scss']
 })
@@ -18,6 +19,10 @@ export class SubscribersComponent {
   subscribers = this.subService.subscribers;
   showForm = signal(false);
   editingId = signal<string | null>(null);
+
+  // Modal state
+  showConfirmDelete = signal(false);
+  subscriberToDelete = signal<string | null>(null);
   
   form = this.fb.group({
     name: ['', Validators.required],
@@ -101,9 +106,21 @@ export class SubscribersComponent {
     this.cancelEdit();
   }
 
-  delete(id: string) {
-    if (confirm('¿Estás seguro de eliminar este abonado?')) {
-      this.subService.deleteSubscriber(id);
+  requestDelete(id: string) {
+    this.subscriberToDelete.set(id);
+    this.showConfirmDelete.set(true);
+  }
+
+  async confirmDelete() {
+    const id = this.subscriberToDelete();
+    if (id) {
+      await this.subService.deleteSubscriber(id);
     }
+    this.closeModal();
+  }
+
+  closeModal() {
+    this.showConfirmDelete.set(false);
+    this.subscriberToDelete.set(null);
   }
 }

@@ -64,7 +64,7 @@
                 <td>{{ m.vehicle_type.toUpperCase() }}</td>
                 <td class="text-right">{{ currency }} {{ (m.amount_paid || 0) | number:'1.2-2' }}</td>
                 <td>
-                  <button class="btn-icon danger" (click)="deleteMovement(m.id)" title="Eliminar registro">
+                  <button class="btn-icon danger" (click)="requestDeleteMovement(m.id)" title="Eliminar registro">
                     <svg viewBox="0 0 24 24" width="16" height="16"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
                   </button>
                 </td>
@@ -98,7 +98,7 @@
                 <td>{{ e.description }}</td>
                 <td class="text-right">{{ currency }} {{ (e.amount || 0) | number:'1.2-2' }}</td>
                 <td>
-                  <button class="btn-icon danger" (click)="deleteExpense(e.id)" title="Eliminar gasto">
+                  <button class="btn-icon danger" (click)="requestDeleteExpense(e.id)" title="Eliminar gasto">
                     <svg viewBox="0 0 24 24" width="16" height="16"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
                   </button>
                 </td>
@@ -112,3 +112,10 @@
     }
   </div>
 </div>
+
+@if (showConfirmDelete()) {
+  <app-confirm-modal 
+    (onConfirm)="confirmDelete()" 
+    (onCancel)="closeModal()">
+  </app-confirm-modal>
+}

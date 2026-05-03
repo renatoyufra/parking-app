@@ -43,7 +43,7 @@
               <td><strong>{{ v.plate || '—' }}</strong></td>
               <td>{{ v.checkedInAt | date:'HH:mm' }}</td>
               <td class="text-right">
-                <button class="btn-icon danger" (click)="deleteVehicle(v.id)" title="Eliminar por error">
+                <button class="btn-icon danger" (click)="requestDeleteVehicle(v.id)" title="Eliminar por error">
                   <svg viewBox="0 0 24 24" width="16" height="16"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
                 </button>
               </td>
@@ -58,3 +58,10 @@
     </div>
   </div>
 </section>
+
+@if (showConfirmDelete()) {
+  <app-confirm-modal 
+    (onConfirm)="confirmDeleteVehicle()" 
+    (onCancel)="closeModal()">
+  </app-confirm-modal>
+}

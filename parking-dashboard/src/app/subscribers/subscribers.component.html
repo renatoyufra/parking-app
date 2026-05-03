@@ -69,7 +69,7 @@
         </div>
         <div class="card-actions">
           <button class="btn secondary sm" (click)="edit(sub)">Editar</button>
-          <button class="btn danger sm" (click)="delete(sub.id)">Eliminar</button>
+          <button class="btn danger sm" (click)="requestDelete(sub.id)">Eliminar</button>
         </div>
       </div>
     } @empty {
@@ -77,3 +77,10 @@
     }
   </div>
 </div>
+
+@if (showConfirmDelete()) {
+  <app-confirm-modal 
+    (onConfirm)="confirmDelete()" 
+    (onCancel)="closeModal()">
+  </app-confirm-modal>
+}
