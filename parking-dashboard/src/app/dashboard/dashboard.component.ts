@@ -38,9 +38,13 @@ export class DashboardComponent {
   summary = this.expensesService.summary;
   currency = CURRENCY_SYMBOL;
 
-  displayedColumns = ['type', 'plate', 'checkedInAt', 'actions'];
-
   constructor() {
     this.expensesService.loadSummary();
+  }
+
+  async deleteVehicle(id: string) {
+    if (confirm('¿Estás seguro de eliminar este vehículo? No se registrará salida ni cobro.')) {
+      await this.parking.deleteVehicle(id);
+    }
   }
 }

@@ -3,6 +3,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DailyCashReportService } from '../services/daily-cash-report.service';
 import { PrintService } from '../services/print.service';
+import { ExpensesService } from '../services/expenses.service';
 import { CURRENCY_SYMBOL } from '../config';
 import { DurationPipe } from '../pipes/duration.pipe';
 
@@ -16,6 +17,7 @@ import { DurationPipe } from '../pipes/duration.pipe';
 export class MovementsComponent implements OnInit {
   private reportService = inject(DailyCashReportService);
   private printer = inject(PrintService);
+  private expensesService = inject(ExpensesService);
   private platformId = inject(PLATFORM_ID);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -64,6 +66,19 @@ export class MovementsComponent implements OnInit {
       await this.printer.printCashReport(r);
     } finally {
       this.printing.set(false);
+    }
+  }
+
+  async deleteMovement(id: number) {
+    if (confirm('¿Estás seguro de eliminar este registro? Se borrará de la contabilidad.')) {
+      await this.reportService.deleteMovement(id);
+    }
+  }
+
+  async deleteExpense(id: number) {
+    if (confirm('¿Estás seguro de eliminar este gasto? Se borrará de la contabilidad.')) {
+      await this.expensesService.deleteExpense(id);
+      this.loadForSelectedDate(); // Recargar reporte para actualizar totales
     }
   }
 

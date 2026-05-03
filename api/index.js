@@ -307,6 +307,20 @@ app.post("/vehicles/check-out", async (req, res) => {
     }
 });
 
+// 4. Eliminar vehículo estacionado (Error o prueba)
+app.delete("/vehicles/:id", async (req, res) => {
+    const { id } = req.params;
+    try {
+        await db.execute({
+            sql: "DELETE FROM parked_vehicles WHERE id = ?",
+            args: [id],
+        });
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // --- ENDPOINTS TARIFAS ---
 
 app.get("/rates", async (req, res) => {
@@ -457,6 +471,19 @@ app.get("/expenses", async (req, res) => {
             args: [today],
         });
         res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete("/expenses/:id", async (req, res) => {
+    const { id } = req.params;
+    try {
+        await db.execute({
+            sql: "DELETE FROM expenses WHERE id = ?",
+            args: [id],
+        });
+        res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -650,6 +677,19 @@ app.get("/daily-cash-report", async (req, res) => {
             movements: movementsResult.rows,
             expenses: expensesResult.rows,
         });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete("/movements/:id", async (req, res) => {
+    const { id } = req.params;
+    try {
+        await db.execute({
+            sql: "DELETE FROM movements WHERE id = ?",
+            args: [id],
+        });
+        res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

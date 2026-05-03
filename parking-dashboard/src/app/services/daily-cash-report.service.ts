@@ -64,4 +64,12 @@ export class DailyCashReportService {
       this.loadingSig.set(false);
     }
   }
+
+  async deleteMovement(id: number) {
+    await firstValueFrom(this.http.delete(`${API_URL}/movements/${id}`));
+    const current = this.reportSig();
+    if (current) {
+      this.loadReport(current.date); // Recargar para actualizar totales
+    }
+  }
 }

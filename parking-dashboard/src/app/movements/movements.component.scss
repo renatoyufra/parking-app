@@ -108,6 +108,25 @@
 
 .text-right { text-align: right; }
 
+.btn-icon {
+  background: transparent;
+  border: none;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  
+  &.danger {
+    color: #ef4444;
+    &:hover { background: #fef2f2; }
+  }
+  
+  svg { fill: currentColor; }
+}
+
 .empty {
   background: #fff;
   border: 1px dashed #cbd5e1;

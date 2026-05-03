@@ -98,6 +98,11 @@ export class ParkingService {
     };
   }
 
+  async deleteVehicle(id: string): Promise<void> {
+    await firstValueFrom(this.http.delete(`${API_URL}/vehicles/${id}`));
+    this.vehiclesSig.update(v => v.filter(item => item.id !== id));
+  }
+
   // Método auxiliar para obtener datos de salida sin procesar el cobro (pre-cálculo)
   calculateFee(vehicle: Vehicle): { durationMinutes: number, totalFee: number } {
     // Este cálculo es local para mostrar en la UI antes de confirmar, 

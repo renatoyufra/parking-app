@@ -53,6 +53,15 @@ export class ExpensesService {
     }
   }
 
+  async deleteExpense(id: number) {
+    try {
+      await firstValueFrom(this.http.delete(`${API_URL}/expenses/${id}`));
+      this.loadSummary();
+    } catch (e) {
+      console.error('Error deleting expense', e);
+    }
+  }
+
   async loadSummary() {
     if (!isPlatformBrowser(this.platformId) || !this.auth.isAuthenticated()) return;
     try {
