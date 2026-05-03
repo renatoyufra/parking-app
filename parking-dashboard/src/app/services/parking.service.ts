@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Vehicle, VehicleType, VehicleRates } from '../models/parking.models';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from './auth.service';
+import { ExpensesService } from './expenses.service';
 import { isPlatformBrowser } from '@angular/common';
 
 const API_URL = 'http://localhost:4000';
@@ -17,6 +18,7 @@ const DEFAULT_RATES: VehicleRates = {
 export class ParkingService {
   private http = inject(HttpClient);
   private auth = inject(AuthService);
+  private expenses = inject(ExpensesService);
   private platformId = inject(PLATFORM_ID);
   
   private vehiclesSig = signal<Vehicle[]>([]);
@@ -81,6 +83,7 @@ export class ParkingService {
     const rawVehicle = await firstValueFrom(this.http.post<any>(`${API_URL}/vehicles/check-in`, { type, plate }));
     const vehicle = this.mapVehicle(rawVehicle);
     this.vehiclesSig.update(v => [...v, vehicle]);
+    this.expenses.loadSummary(); // Refrescar contador de estacionados si el summary lo usa
     return vehicle;
   }
 
@@ -91,6 +94,7 @@ export class ParkingService {
     const vehicle = this.mapVehicle(result.vehicle);
     
     this.vehiclesSig.update(v => v.filter(item => item.id !== id));
+    this.expenses.loadSummary(); // Refrescar ingresos en dashboard
     
     return {
       vehicle,
@@ -101,6 +105,7 @@ export class ParkingService {
   async deleteVehicle(id: string): Promise<void> {
     await firstValueFrom(this.http.delete(`${API_URL}/vehicles/${id}`));
     this.vehiclesSig.update(v => v.filter(item => item.id !== id));
+    this.expenses.loadSummary();
   }
 
   // Método auxiliar para obtener datos de salida sin procesar el cobro (pre-cálculo)

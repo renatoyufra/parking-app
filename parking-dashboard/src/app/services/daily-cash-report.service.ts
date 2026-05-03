@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { ExpensesService } from './expenses.service';
 
 const API_URL = 'http://localhost:4000';
 
@@ -39,6 +40,7 @@ export interface DailyCashReport {
 @Injectable({ providedIn: 'root' })
 export class DailyCashReportService {
   private http = inject(HttpClient);
+  private expenses = inject(ExpensesService);
 
   private reportSig = signal<DailyCashReport | null>(null);
   report = this.reportSig.asReadonly();
@@ -67,6 +69,7 @@ export class DailyCashReportService {
 
   async deleteMovement(id: number) {
     await firstValueFrom(this.http.delete(`${API_URL}/movements/${id}`));
+    this.expenses.loadSummary(); // Refrescar Dashboard
     const current = this.reportSig();
     if (current) {
       this.loadReport(current.date); // Recargar para actualizar totales
