@@ -84,7 +84,7 @@ export class ConfirmModalComponent {
   onCancel = output<void>();
 
   confirm() {
-    if (this.password() === '7399') {
+    if (this.password() === '3010') {
       this.onConfirm.emit();
     } else {
       this.error.set('Clave incorrecta');
