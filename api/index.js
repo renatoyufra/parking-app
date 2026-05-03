@@ -353,8 +353,8 @@ app.get("/subscribers", async (req, res) => {
             name: r.name,
             plate: r.plate,
             type: r.vehicle_type,
-            startDate: r.start_date,
-            endDate: r.end_date,
+            startDate: r.start_date ? r.start_date.split('T')[0] : null,
+            endDate: r.end_date ? r.end_date.split('T')[0] : null,
             monthlyFee: r.monthly_fee || 0,
             balanceDue: r.balance_due || 0,
             active: Boolean(r.active)
@@ -388,8 +388,43 @@ app.post("/subscribers", async (req, res) => {
             name: r.name,
             plate: r.plate,
             type: r.vehicle_type,
-            startDate: r.start_date,
-            endDate: r.end_date,
+            startDate: r.start_date ? r.start_date.split('T')[0] : null,
+            endDate: r.end_date ? r.end_date.split('T')[0] : null,
+            monthlyFee: r.monthly_fee,
+            balanceDue: r.balance_due,
+            active: Boolean(r.active)
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put("/subscribers/:id", async (req, res) => {
+    const { id } = req.params;
+    const { name, plate, type, startDate, endDate, monthlyFee, balanceDue, active } = req.body;
+    try {
+        const normalizedPlate =
+            typeof plate === "string" ? plate.trim().toUpperCase() : "";
+
+        await db.execute({
+            sql: `UPDATE subscribers 
+                  SET name = ?, plate = ?, vehicle_type = ?, start_date = ?, end_date = ?, monthly_fee = ?, balance_due = ?, active = ?
+                  WHERE id = ?`,
+            args: [name, normalizedPlate, type, startDate, endDate, monthlyFee || 0, balanceDue || 0, active ? 1 : 0, id],
+        });
+
+        const row = await db.execute({
+            sql: "SELECT * FROM subscribers WHERE id = ?",
+            args: [id],
+        });
+        const r = row.rows[0];
+        res.json({
+            id: r.id,
+            name: r.name,
+            plate: r.plate,
+            type: r.vehicle_type,
+            startDate: r.start_date ? r.start_date.split('T')[0] : null,
+            endDate: r.end_date ? r.end_date.split('T')[0] : null,
             monthlyFee: r.monthly_fee,
             balanceDue: r.balance_due,
             active: Boolean(r.active)

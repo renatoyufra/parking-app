@@ -17,6 +17,7 @@ export class SubscribersComponent {
 
   subscribers = this.subService.subscribers;
   showForm = signal(false);
+  editingId = signal<string | null>(null);
   
   form = this.fb.group({
     name: ['', Validators.required],
@@ -31,15 +32,56 @@ export class SubscribersComponent {
   vehicleTypes: VehicleType[] = ['auto', 'camioneta', 'camion'];
 
   toggleForm() {
-    this.showForm.update(v => !v);
+    if (this.showForm()) {
+      this.cancelEdit();
+    } else {
+      this.showForm.set(true);
+    }
+  }
+
+  private formatDateForInput(dateInput: any): string {
+    if (!dateInput) return '';
+    const d = new Date(dateInput);
+    if (isNaN(d.getTime())) {
+      // Si ya es un string YYYY-MM-DD, devolverlo tal cual
+      if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateInput)) {
+        return dateInput.split('T')[0];
+      }
+      return '';
+    }
+    return d.toISOString().split('T')[0];
+  }
+
+  edit(sub: any) {
+    this.editingId.set(sub.id);
+    this.form.patchValue({
+      name: sub.name,
+      plate: sub.plate,
+      type: sub.type,
+      startDate: this.formatDateForInput(sub.startDate),
+      endDate: this.formatDateForInput(sub.endDate),
+      monthlyFee: sub.monthlyFee,
+      balanceDue: sub.balanceDue
+    });
+    this.showForm.set(true);
+  }
+
+  cancelEdit() {
+    this.editingId.set(null);
+    this.form.reset({
+      type: 'auto',
+      startDate: new Date().toISOString().split('T')[0],
+      monthlyFee: 0,
+      balanceDue: 0
+    });
+    this.showForm.set(false);
   }
 
   submit() {
     if (this.form.invalid) return;
     
     const val = this.form.getRawValue();
-    
-    this.subService.addSubscriber({
+    const subData = {
       name: val.name || '',
       plate: (val.plate || '').toUpperCase(),
       type: (val.type as VehicleType) || 'auto',
@@ -48,15 +90,15 @@ export class SubscribersComponent {
       monthlyFee: Number(val.monthlyFee || 0),
       balanceDue: Number(val.balanceDue || 0),
       active: true
-    });
+    };
 
-    this.form.reset({
-      type: 'auto',
-      startDate: new Date().toISOString().split('T')[0],
-      monthlyFee: 0,
-      balanceDue: 0
-    });
-    this.showForm.set(false);
+    if (this.editingId()) {
+      this.subService.updateSubscriber(this.editingId()!, subData);
+    } else {
+      this.subService.addSubscriber(subData);
+    }
+
+    this.cancelEdit();
   }
 
   delete(id: string) {

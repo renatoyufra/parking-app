@@ -89,6 +89,13 @@
   }
 
   .dates { font-size: 0.875rem; color: #64748b; display: flex; gap: 1rem; }
+
+  .card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    .btn { flex: 1; }
+  }
 }
 
 .btn {

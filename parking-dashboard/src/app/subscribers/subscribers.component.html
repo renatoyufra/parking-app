@@ -1,11 +1,11 @@
 <div class="page-container">
   <div class="header">
-    <h1>Abonados</h1>
-    <p>Gestión de clientes con suscripción mensual o anual.</p>
+    <h1>{{ editingId() ? 'Editar Abonado' : 'Abonados' }}</h1>
+    <p>{{ editingId() ? 'Actualizando datos de ' + form.get('name')?.value : 'Gestión de clientes con suscripción mensual o anual.' }}</p>
   </div>
 
   <div class="actions">
-    <button class="btn primary" (click)="toggleForm()">
+    <button class="btn" [class.primary]="!showForm()" [class.secondary]="showForm()" (click)="toggleForm()">
       {{ showForm() ? 'Cancelar' : 'Nuevo Abonado' }}
     </button>
   </div>
@@ -67,7 +67,10 @@
           <span>Desde: {{ sub.startDate | date:'dd/MM/yyyy' }}</span>
           <span>Hasta: {{ sub.endDate | date:'dd/MM/yyyy' }}</span>
         </div>
-        <button class="btn danger sm" (click)="delete(sub.id)">Eliminar</button>
+        <div class="card-actions">
+          <button class="btn secondary sm" (click)="edit(sub)">Editar</button>
+          <button class="btn danger sm" (click)="delete(sub.id)">Eliminar</button>
+        </div>
       </div>
     } @empty {
       <div class="empty-state">No hay abonados registrados.</div>

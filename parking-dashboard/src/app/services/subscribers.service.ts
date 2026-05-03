@@ -41,6 +41,15 @@ export class SubscribersService {
     }
   }
 
+  async updateSubscriber(id: string, sub: Partial<Subscriber>) {
+    try {
+      const updated = await firstValueFrom(this.http.put<Subscriber>(`${API_URL}/subscribers/${id}`, sub));
+      this.subscribersSig.update(list => list.map(s => s.id === id ? updated : s));
+    } catch (e) {
+      console.error('Error updating subscriber', e);
+    }
+  }
+
   async deleteSubscriber(id: string) {
     try {
       await firstValueFrom(this.http.delete(`${API_URL}/subscribers/${id}`));
