@@ -25,7 +25,7 @@ app.use(
         methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allowedHeaders: ["Content-Type", "Authorization"],
         optionsSuccessStatus: 204,
-    })
+    }),
 );
 app.options(/.*/, cors());
 app.use(express.json());
@@ -50,7 +50,7 @@ function base64UrlDecode(input) {
 
 function sign(payload) {
     return base64UrlEncode(
-        crypto.createHmac("sha256", AUTH_SECRET).update(payload).digest()
+        crypto.createHmac("sha256", AUTH_SECRET).update(payload).digest(),
     );
 }
 
@@ -76,13 +76,13 @@ function verifyToken(token) {
         expected.length === signaturePart.length &&
         crypto.timingSafeEqual(
             Buffer.from(expected),
-            Buffer.from(signaturePart)
+            Buffer.from(signaturePart),
         );
     if (!ok) return null;
 
     try {
         const payload = JSON.parse(
-            base64UrlDecode(payloadPart).toString("utf8")
+            base64UrlDecode(payloadPart).toString("utf8"),
         );
         const now = Math.floor(Date.now() / 1000);
         if (typeof payload?.exp !== "number" || payload.exp < now) return null;
@@ -123,6 +123,15 @@ async function ensureAuthInitialized() {
     const newHash = hashPassword(ADMIN_PASSWORD, newSalt);
     await setSetting("auth_salt", newSalt);
     await setSetting("auth_hash", newHash);
+}
+
+function getLocalISOString() {
+    const tzOffset = new Date().getTimezoneOffset() * 60000;
+    return new Date(Date.now() - tzOffset).toISOString().slice(0, -1);
+}
+
+function getLocalDayString() {
+    return getLocalISOString().split("T")[0];
 }
 
 app.use(async (req, res, next) => {
@@ -184,18 +193,15 @@ app.post("/vehicles/check-in", async (req, res) => {
             typeof plate === "string" ? plate.trim().toUpperCase() : null;
         let isSub = false;
         if (normalizedPlate) {
+            const today = getLocalDayString();
             const subResult = await db.execute({
-                sql: "SELECT 1 FROM subscribers WHERE UPPER(plate) = ? AND active = 1 AND end_date >= date('now') LIMIT 1",
-                args: [normalizedPlate],
+                sql: "SELECT 1 FROM subscribers WHERE UPPER(plate) = ? AND active = 1 AND end_date >= ? LIMIT 1",
+                args: [normalizedPlate, today],
             });
             isSub = subResult.rows.length > 0;
         }
 
-        // Hora local
-        const tzOffset = new Date().getTimezoneOffset() * 60000;
-        const localISOTime = new Date(Date.now() - tzOffset)
-            .toISOString()
-            .slice(0, -1);
+        const localISOTime = getLocalISOString();
 
         await db.execute({
             sql: "INSERT INTO parked_vehicles (id, plate, type, is_subscriber, entry_time) VALUES (?, ?, ?, ?, ?)",
@@ -215,7 +221,7 @@ app.post("/vehicles/check-in", async (req, res) => {
 
 // 3. Registrar Salida (Check-Out / Cobro)
 app.post("/vehicles/check-out", async (req, res) => {
-    const { id } = req.body;
+    const { id, paymentAmount } = req.body;
 
     try {
         const vResult = await db.execute({
@@ -253,18 +259,32 @@ app.post("/vehicles/check-out", async (req, res) => {
                     remainingMinutes -= 60;
                 }
             }
+        } else {
+            // Caso Abonado: el totalFee es lo que decida pagar de su deuda (paymentAmount)
+            totalFee = Number(paymentAmount) || 0;
+            
+            // Si pagó algo, descontar de su balance_due
+            if (totalFee > 0 && vehicle.plate) {
+                await db.execute({
+                    sql: "UPDATE subscribers SET balance_due = MAX(0, balance_due - ?) WHERE UPPER(plate) = ? AND active = 1",
+                    args: [totalFee, vehicle.plate.toUpperCase()],
+                });
+            }
         }
 
-        // Registrar movimiento
+        const exitTime = getLocalISOString();
+
+        // Registrar movimiento (el ingreso a caja)
         await db.execute({
             sql: `INSERT INTO movements 
-            (vehicle_id, plate, vehicle_type, entry_time, duration_minutes, amount_paid, is_subscriber) 
-            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            (vehicle_id, plate, vehicle_type, entry_time, exit_time, duration_minutes, amount_paid, is_subscriber) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
             args: [
                 vehicle.id,
                 vehicle.plate,
                 vehicle.type,
                 vehicle.entry_time,
+                exitTime,
                 durationMinutes,
                 totalFee,
                 vehicle.is_subscriber,
@@ -327,23 +347,53 @@ app.put("/rates", async (req, res) => {
 app.get("/subscribers", async (req, res) => {
     try {
         const result = await db.execute("SELECT * FROM subscribers");
-        res.json(result.rows);
+        // Mapear snake_case a camelCase para el frontend
+        const mapped = result.rows.map(r => ({
+            id: r.id,
+            name: r.name,
+            plate: r.plate,
+            type: r.vehicle_type,
+            startDate: r.start_date,
+            endDate: r.end_date,
+            monthlyFee: r.monthly_fee || 0,
+            balanceDue: r.balance_due || 0,
+            active: Boolean(r.active)
+        }));
+        res.json(mapped);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
 app.post("/subscribers", async (req, res) => {
-    const { name, plate, type, startDate, endDate } = req.body;
+    const { name, plate, type, startDate, endDate, monthlyFee, balanceDue } = req.body;
     const id = uuidv4();
     try {
         const normalizedPlate =
-            typeof plate === "string" ? plate.trim().toUpperCase() : null;
+            typeof plate === "string" ? plate.trim().toUpperCase() : "";
+
         await db.execute({
-            sql: "INSERT INTO subscribers (id, name, plate, vehicle_type, start_date, end_date) VALUES (?, ?, ?, ?, ?, ?)",
-            args: [id, name, normalizedPlate, type, startDate, endDate],
+            sql: `INSERT INTO subscribers (id, name, plate, vehicle_type, start_date, end_date, monthly_fee, balance_due, active) 
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+            args: [id, name, normalizedPlate, type, startDate, endDate, monthlyFee || 0, balanceDue || 0],
         });
-        res.status(201).json({ id, ...req.body, active: 1 });
+
+        const row = await db.execute({
+            sql: "SELECT * FROM subscribers WHERE id = ?",
+            args: [id],
+        });
+        const r = row.rows[0];
+        res.status(201).json({
+            id: r.id,
+            name: r.name,
+            plate: r.plate,
+            type: r.vehicle_type,
+            startDate: r.start_date,
+            endDate: r.end_date,
+            monthlyFee: r.monthly_fee,
+            balanceDue: r.balance_due,
+            active: Boolean(r.active)
+        });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -366,9 +416,11 @@ app.delete("/subscribers/:id", async (req, res) => {
 
 app.get("/expenses", async (req, res) => {
     try {
-        const result = await db.execute(
-            "SELECT * FROM expenses WHERE date(created_at) = date('now')"
-        );
+        const today = getLocalDayString();
+        const result = await db.execute({
+            sql: "SELECT * FROM expenses WHERE date(created_at) = ?",
+            args: [today],
+        });
         res.json(result.rows);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -400,15 +452,17 @@ app.post("/expenses", async (req, res) => {
                 .json({ error: "category_id must be a non-negative number" });
         }
 
+        const createdAt = getLocalISOString();
         const result = await db.execute({
-            sql: "INSERT INTO expenses (description, amount, category_id) VALUES (?, ?, ?)",
-            args: [desc, amt, categoryId],
+            sql: "INSERT INTO expenses (description, amount, category_id, created_at) VALUES (?, ?, ?, ?)",
+            args: [desc, amt, categoryId, createdAt],
         });
         res.status(201).json({
             id: Number(result.lastInsertRowid),
             description: desc,
             amount: amt,
             category_id: categoryId,
+            created_at: createdAt,
         });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -417,7 +471,7 @@ app.post("/expenses", async (req, res) => {
 
 app.get("/cash/opening", async (req, res) => {
     const date = typeof req.query.date === "string" ? req.query.date : null;
-    const day = date || new Date().toISOString().split("T")[0];
+    const day = date || getLocalDayString();
 
     try {
         const result = await db.execute({
@@ -437,7 +491,7 @@ app.put("/cash/opening", async (req, res) => {
     const day =
         typeof date === "string" && date.trim().length > 0
             ? date.trim()
-            : new Date().toISOString().split("T")[0];
+            : getLocalDayString();
     const opening = Number(opening_balance);
 
     if (!Number.isFinite(opening) || opening < 0) {
@@ -462,7 +516,7 @@ app.put("/cash/opening", async (req, res) => {
 });
 
 app.get("/daily-summary", async (req, res) => {
-    const today = new Date().toISOString().split("T")[0];
+    const today = getLocalDayString();
 
     const summary = {
         date: today,
@@ -476,18 +530,20 @@ app.get("/daily-summary", async (req, res) => {
 
     try {
         // 1. Calcular Ingresos
-        const incomeResult = await db.execute(
-            "SELECT SUM(amount_paid) as total, COUNT(*) as count FROM movements WHERE date(exit_time) = date('now')"
-        );
+        const incomeResult = await db.execute({
+            sql: "SELECT SUM(amount_paid) as total, COUNT(*) as count FROM movements WHERE date(exit_time) = ?",
+            args: [today],
+        });
         if (incomeResult.rows.length > 0) {
             summary.income = incomeResult.rows[0].total || 0;
             summary.movements_count = incomeResult.rows[0].count || 0;
         }
 
         // 2. Calcular Gastos
-        const expenseResult = await db.execute(
-            "SELECT SUM(amount) as total FROM expenses WHERE date(created_at) = date('now')"
-        );
+        const expenseResult = await db.execute({
+            sql: "SELECT SUM(amount) as total FROM expenses WHERE date(created_at) = ?",
+            args: [today],
+        });
         if (expenseResult.rows.length > 0) {
             summary.expenses = expenseResult.rows[0].total || 0;
         }
@@ -511,7 +567,7 @@ app.get("/daily-summary", async (req, res) => {
 
 app.get("/daily-cash-report", async (req, res) => {
     const date = typeof req.query.date === "string" ? req.query.date : null;
-    const day = date || new Date().toISOString().split("T")[0];
+    const day = date || getLocalDayString();
 
     try {
         const openingResult = await db.execute({
@@ -541,11 +597,11 @@ app.get("/daily-cash-report", async (req, res) => {
 
         const incomeTotal = movementsResult.rows.reduce(
             (sum, r) => sum + (Number(r.amount_paid) || 0),
-            0
+            0,
         );
         const expensesTotal = expensesResult.rows.reduce(
             (sum, r) => sum + (Number(r.amount) || 0),
-            0
+            0,
         );
         const balance = incomeTotal - expensesTotal;
 

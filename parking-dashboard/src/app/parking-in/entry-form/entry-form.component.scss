@@ -16,14 +16,45 @@
 
 .subscriber-alert {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 8px;
   background: #ecfdf5;
   color: #064e3b;
-  padding: 12px;
-  border-radius: 8px;
+  padding: 16px;
+  border-radius: 12px;
   border: 1px solid #10b981;
   font-weight: 500;
+  
+  &.has-debt {
+    background: #fef2f2;
+    border-color: #f87171;
+    color: #991b1b;
+    
+    .badge { background: #dc2626; }
+    .amount { color: #dc2626; font-size: 1.5rem; font-weight: 900; }
+  }
+
+  .sub-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .debt-info {
+    display: flex;
+    flex-direction: column;
+    background: rgba(255, 255, 255, 0.5);
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 4px;
+
+    .label { font-size: 0.8rem; color: inherit; margin-bottom: 2px; }
+  }
+
+  .clean-info {
+    font-size: 0.9rem;
+    opacity: 0.8;
+  }
   
   .badge {
     background: #10b981;

@@ -52,23 +52,54 @@
 }
 
 .subscriber-info {
-  margin-top: 12px;
-  background: #ecfdf5;
+  margin-top: 16px;
+  background: #f0fdf4;
   color: #064e3b;
-  padding: 12px;
-  border-radius: 8px;
+  padding: 20px;
+  border-radius: 12px;
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 16px;
   font-weight: 500;
+  border: 1px solid #dcfce7;
   
   .badge {
+    align-self: flex-start;
     background: #10b981;
     color: #fff;
     padding: 2px 8px;
     border-radius: 4px;
     font-size: 0.75rem;
     font-weight: 700;
+  }
+
+  .debt-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    .label { font-size: 0.9rem; opacity: 0.8; }
+    .debt-amount { font-size: 1.25rem; font-weight: 800; color: #dc2626; }
+  }
+
+  .payment-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    label { font-size: 0.85rem; font-weight: 700; color: #374151; }
+    .payment-input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #10b981;
+      border-radius: 8px;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #065f46;
+      background: #fff;
+      &:focus {
+        outline: none;
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+      }
+    }
   }
 }
 

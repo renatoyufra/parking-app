@@ -226,8 +226,9 @@ app.post("/print-ticket", async (req, res) => {
         }
 
         printer.cut();
-
-        await printDirectToUsb(printer);
+        for (let index = 0; index < 2; index++) {
+            await printDirectToUsb(printer);
+        }
 
         res.send({ success: true });
     } catch (error) {

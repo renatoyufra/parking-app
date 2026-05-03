@@ -17,9 +17,21 @@
   </div>
   
   @if (foundSubscriber()) {
-    <div class="subscriber-alert">
-      <span class="badge">ABONADO</span>
-      <span>{{ foundSubscriber()?.name }}</span>
+    <div class="subscriber-alert" [class.has-debt]="(foundSubscriber()?.balanceDue || 0) > 0">
+      <div class="sub-header">
+        <span class="badge">ABONADO</span>
+        <strong>{{ foundSubscriber()?.name }}</strong>
+      </div>
+      @if ((foundSubscriber()?.balanceDue || 0) > 0) {
+        <div class="debt-info">
+          <span class="label">PAGO PENDIENTE:</span>
+          <span class="amount">S/ {{ foundSubscriber()?.balanceDue | number:'1.2-2' }}</span>
+        </div>
+      } @else {
+        <div class="clean-info">
+          <span>Al día con sus pagos</span>
+        </div>
+      }
     </div>
   }
 </form>

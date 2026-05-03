@@ -84,8 +84,8 @@ export class ParkingService {
     return vehicle;
   }
 
-  async checkOut(id: string): Promise<{ vehicle: Vehicle, exitInfo: { duration: number, fee: number } }> {
-    const result = await firstValueFrom(this.http.post<any>(`${API_URL}/vehicles/check-out`, { id }));
+  async checkOut(id: string, paymentAmount?: number): Promise<{ vehicle: Vehicle, exitInfo: { duration: number, fee: number } }> {
+    const result = await firstValueFrom(this.http.post<any>(`${API_URL}/vehicles/check-out`, { id, paymentAmount }));
     
     // Mapear el vehículo devuelto también
     const vehicle = this.mapVehicle(result.vehicle);

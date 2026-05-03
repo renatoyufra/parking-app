@@ -114,7 +114,7 @@
           <tbody>
             @for (expense of expenses(); track expense.id) {
               <tr>
-                <td>{{ expense.created_at | date:'HH:mm' }}</td>
+                <td>{{ asTime(expense.created_at || null) }}</td>
                 <td>{{ expense.description }}</td>
                 <td class="text-right font-bold text-red">{{ currency }} {{ expense.amount | number:'1.2-2' }}</td>
               </tr>

@@ -4,11 +4,12 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { DailyCashReportService } from '../services/daily-cash-report.service';
 import { PrintService } from '../services/print.service';
 import { CURRENCY_SYMBOL } from '../config';
+import { DurationPipe } from '../pipes/duration.pipe';
 
 @Component({
   selector: 'app-movements',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, DurationPipe],
   templateUrl: './movements.component.html',
   styleUrls: ['./movements.component.scss']
 })
@@ -68,7 +69,11 @@ export class MovementsComponent implements OnInit {
 
   asTime(value?: string | null): string {
     if (!value) return '--:--';
-    const d = new Date(value);
+    // Asegurar formato ISO para navegadores estrictos (Safari)
+    const normalized = value.includes(' ') && !value.includes('T')
+      ? value.replace(' ', 'T')
+      : value;
+    const d = new Date(normalized);
     if (Number.isNaN(d.getTime())) return '--:--';
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }

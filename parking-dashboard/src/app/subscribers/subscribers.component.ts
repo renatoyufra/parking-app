@@ -23,7 +23,9 @@ export class SubscribersComponent {
     plate: ['', Validators.required],
     type: ['auto' as VehicleType, Validators.required],
     startDate: [new Date().toISOString().split('T')[0], Validators.required],
-    endDate: ['', Validators.required]
+    endDate: ['', Validators.required],
+    monthlyFee: [0, [Validators.required, Validators.min(0)]],
+    balanceDue: [0, [Validators.required, Validators.min(0)]]
   });
 
   vehicleTypes: VehicleType[] = ['auto', 'camioneta', 'camion'];
@@ -35,20 +37,24 @@ export class SubscribersComponent {
   submit() {
     if (this.form.invalid) return;
     
-    const val = this.form.value;
+    const val = this.form.getRawValue();
     
     this.subService.addSubscriber({
-      name: val.name!,
-      plate: val.plate!.toUpperCase(),
-      type: val.type as VehicleType,
-      startDate: new Date(val.startDate!),
-      endDate: new Date(val.endDate!),
+      name: val.name || '',
+      plate: (val.plate || '').toUpperCase(),
+      type: (val.type as VehicleType) || 'auto',
+      startDate: new Date(val.startDate || new Date()),
+      endDate: new Date(val.endDate || new Date()),
+      monthlyFee: Number(val.monthlyFee || 0),
+      balanceDue: Number(val.balanceDue || 0),
       active: true
     });
 
     this.form.reset({
       type: 'auto',
-      startDate: new Date().toISOString().split('T')[0]
+      startDate: new Date().toISOString().split('T')[0],
+      monthlyFee: 0,
+      balanceDue: 0
     });
     this.showForm.set(false);
   }

@@ -116,4 +116,14 @@ export class CashRegisterComponent {
       this.expenseSaving.set(false);
     }
   }
+
+  asTime(value?: string | null): string {
+    if (!value) return '--:--';
+    const normalized = value.includes(' ') && !value.includes('T')
+      ? value.replace(' ', 'T')
+      : value;
+    const d = new Date(normalized);
+    if (Number.isNaN(d.getTime())) return '--:--';
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
 }

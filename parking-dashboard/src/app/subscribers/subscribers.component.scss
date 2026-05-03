@@ -78,6 +78,16 @@
   }
 
   .plate { font-family: monospace; font-size: 1.25rem; font-weight: 700; color: #334155; }
+  
+  .fees {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 4px 0;
+    .fee { font-size: 0.9rem; color: #475569; }
+    .debt { font-size: 1rem; font-weight: 800; color: #dc2626; }
+  }
+
   .dates { font-size: 0.875rem; color: #64748b; display: flex; gap: 1rem; }
 }
 

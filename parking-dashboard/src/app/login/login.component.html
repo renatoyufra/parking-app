@@ -7,6 +7,10 @@
       <label>Clave</label>
       <input type="password" formControlName="password" placeholder="••••" />
 
+      @if (expired()) {
+        <div class="info-msg">Su sesión ha expirado. Por favor, ingrese de nuevo.</div>
+      }
+
       @if (error()) {
         <div class="error">{{ error() }}</div>
       }

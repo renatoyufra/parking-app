@@ -15,6 +15,8 @@ export interface Subscriber {
   type: VehicleType;
   startDate: Date;
   endDate: Date;
+  monthlyFee: number;
+  balanceDue: number;
   active: boolean;
 }
 

@@ -36,6 +36,14 @@
         <label>Fin</label>
         <input type="date" formControlName="endDate" />
       </div>
+      <div class="field">
+        <label>Mensualidad</label>
+        <input type="number" formControlName="monthlyFee" placeholder="S/ 0.00" />
+      </div>
+      <div class="field">
+        <label>Saldo Pendiente</label>
+        <input type="number" formControlName="balanceDue" placeholder="S/ 0.00" />
+      </div>
       <button type="submit" class="btn primary" [disabled]="form.invalid">Guardar</button>
     </form>
   }
@@ -49,6 +57,12 @@
         </div>
         <p class="plate">{{ sub.plate }}</p>
         <p class="type">{{ sub.type | titlecase }}</p>
+        <div class="fees">
+          <span class="fee">Mensualidad: S/ {{ sub.monthlyFee | number:'1.2-2' }}</span>
+          @if (sub.balanceDue > 0) {
+            <span class="debt">Deuda: S/ {{ sub.balanceDue | number:'1.2-2' }}</span>
+          }
+        </div>
         <div class="dates">
           <span>Desde: {{ sub.startDate | date:'dd/MM/yyyy' }}</span>
           <span>Hasta: {{ sub.endDate | date:'dd/MM/yyyy' }}</span>

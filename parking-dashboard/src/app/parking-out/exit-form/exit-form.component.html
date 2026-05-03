@@ -29,17 +29,30 @@
       </div>
       <div class="row">
         <span class="label">Tiempo transcurrido:</span>
-        <span class="value">{{ formatDuration(exitInfo()?.duration) }}</span>
+        <span class="value">{{ exitInfo()?.duration | duration }}</span>
       </div>
       <div class="total-row">
         <span class="label">TOTAL A PAGAR:</span>
-        <span class="fee">{{ currency }} {{ exitInfo()?.fee }}</span>
+        <span class="fee">{{ currency }} {{ foundVehicle()?.isSubscriber ? paymentAmount() : exitInfo()?.fee }}</span>
       </div>
       
       @if (foundVehicle()?.isSubscriber) {
         <div class="subscriber-info">
           <span class="badge">ABONADO</span>
-          <span>Tarifa cubierta por suscripción</span>
+          <div class="debt-box">
+            <span class="label">Deuda pendiente:</span>
+            <span class="debt-amount">S/ {{ foundSubscriber()?.balanceDue | number:'1.2-2' }}</span>
+          </div>
+          <div class="payment-field">
+            <label>Monto a pagar ahora:</label>
+            <input 
+              type="number" 
+              [ngModel]="paymentAmount()" 
+              (ngModelChange)="paymentAmount.set($event)"
+              placeholder="0.00"
+              class="payment-input"
+            />
+          </div>
         </div>
       }
 
@@ -60,7 +73,7 @@
       <p><strong>TIPO:</strong> {{ foundVehicle()?.type?.toUpperCase() }}</p>
       <p><strong>ENTRADA:</strong> {{ foundVehicle()?.checkedInAt | date:'short' }}</p>
       <p><strong>SALIDA:</strong> {{ now | date:'short' }}</p>
-      <p><strong>TIEMPO:</strong> {{ formatDuration(exitInfo()?.duration) }}</p>
+      <p><strong>TIEMPO:</strong> {{ exitInfo()?.duration | duration }}</p>
       <hr>
       <h3 class="total">TOTAL: {{ currency }} {{ exitInfo()?.fee }}</h3>
       <p class="footer">Gracias por su visita</p>
