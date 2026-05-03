@@ -91,14 +91,6 @@ async function initDb() {
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
 
-        // Migración: Agregar columnas si no existen
-        try {
-            await db.execute("ALTER TABLE subscribers ADD COLUMN monthly_fee REAL DEFAULT 0");
-        } catch (e) {}
-        try {
-            await db.execute("ALTER TABLE subscribers ADD COLUMN balance_due REAL DEFAULT 0");
-        } catch (e) {}
-
         // 4. Registro de Movimientos
         await db.execute(`CREATE TABLE IF NOT EXISTS movements (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
