@@ -315,7 +315,7 @@ app.post("/print-cash-report", async (req, res) => {
                 const amount = Number(m.amount_paid) || 0;
                 const plate = m.plate ? String(m.plate) : "SIN PLACA";
                 const time = formatTime(m.exit_time);
-                printer.println(`${time} ${plate} ${formatMoney(amount)}`);
+                printer.println(`${time} ${m.ticket_number || ""} | ${plate} ${formatMoney(amount)}`);
             }
         }
         printer.drawLine();
