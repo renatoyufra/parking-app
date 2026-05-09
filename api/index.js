@@ -666,7 +666,7 @@ app.get("/daily-cash-report", async (req, res) => {
                 : 0;
 
         const movementsResult = await db.execute({
-            sql: `SELECT id, vehicle_id, plate, vehicle_type, entry_time, exit_time, duration_minutes, amount_paid, is_subscriber, payment_method
+            sql: `SELECT id, vehicle_id, plate, vehicle_type, entry_time, exit_time, duration_minutes, amount_paid, is_subscriber, payment_method, ticket_number
                   FROM movements
                   WHERE date(exit_time) = ?
                   ORDER BY datetime(exit_time) ASC`,
