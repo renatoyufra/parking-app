@@ -54,7 +54,11 @@ export class ExitFormComponent implements OnInit, OnDestroy {
     this.paymentAmount.set(0);
 
     const id = this.qrInput.trim().toUpperCase();
-    this.qrInput = id;
+    this.qrInput = '';
+    if (!id) {
+      this.foundVehicle.set(null);
+      return;
+    }
     const vehicle = this.parking.vehicles().find(v => v.id === id);
     
     if (vehicle) {
