@@ -205,7 +205,14 @@ app.post("/vehicles/check-in", async (req, res) => {
 
         await db.execute({
             sql: "INSERT INTO parked_vehicles (id, plate, type, is_subscriber, entry_time, ticket_number) VALUES (?, ?, ?, ?, ?, ?)",
-            args: [id, normalizedPlate, type, isSub, localISOTime, ticketNumber],
+            args: [
+                id,
+                normalizedPlate,
+                type,
+                isSub,
+                localISOTime,
+                ticketNumber ?? null,
+            ],
         });
 
         const row = await db.execute({
@@ -227,7 +234,7 @@ app.put("/vehicles/:id/ticket-number", async (req, res) => {
     try {
         await db.execute({
             sql: "UPDATE parked_vehicles SET ticket_number = ? WHERE id = ?",
-            args: [ticketNumber, id],
+            args: [ticketNumber ?? null, id],
         });
         res.json({ success: true });
     } catch (err) {
@@ -304,7 +311,7 @@ app.post("/vehicles/check-out", async (req, res) => {
                 durationMinutes,
                 totalFee,
                 vehicle.is_subscriber,
-                vehicle.ticket_number,
+                vehicle.ticket_number ?? null,
             ],
         });
 
