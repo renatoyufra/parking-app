@@ -16,6 +16,7 @@ export interface CashMovementRow {
   amount_paid?: number | null;
   is_subscriber?: number | boolean | null;
   payment_method?: string | null;
+  ticket_number?: string | null;
 }
 
 export interface CashExpenseRow {
