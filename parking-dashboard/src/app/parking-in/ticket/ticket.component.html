@@ -21,7 +21,13 @@
     <div class="entry-label">Entrada</div>
     <div class="date-time">{{ formattedDate }}</div>
 
-    <div class="id">ID: #{{ vehicle.id.toUpperCase().slice(-4) || 'N/A' }}</div>
+    <div class="id">
+      @if (vehicle.ticketNumber) {
+        TICKET #{{ vehicle.ticketNumber }}
+      } @else {
+        ID: #{{ vehicle.id.toUpperCase().slice(-4) || 'N/A' }}
+      }
+    </div>
 
     <div class="footer-note">LA PRIMERA HORA SE ABONA COMPLETA</div>
     <div class="footer-small">Ticket emitido por TicketControl</div>

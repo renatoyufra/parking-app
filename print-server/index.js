@@ -144,6 +144,8 @@ app.post("/print-ticket", async (req, res) => {
         lineCharacter: "-",
     });
 
+    let sequence = null;
+
     try {
         printer.alignCenter();
         printer.println("ESTACIONAMIENTO");
@@ -151,7 +153,7 @@ app.post("/print-ticket", async (req, res) => {
         printer.println("--------------------------------");
 
         if (type === "entry") {
-            const sequence = getNextSequence();
+            sequence = getNextSequence();
             const date = new Date(vehicle.checkedInAt);
 
             // Fecha y Hora en grande
@@ -207,6 +209,9 @@ app.post("/print-ticket", async (req, res) => {
             printer.println("TICKET DE SALIDA");
             printer.drawLine();
             printer.alignLeft();
+            if (vehicle.ticketNumber) {
+                printer.println(`TICKET ENTRADA: #${vehicle.ticketNumber}`);
+            }
             printer.println(`PLACA: ${vehicle.plate || "SIN PLACA"}`);
             printer.println(`TIPO: ${vehicle.type.toUpperCase()}`);
             printer.println(
@@ -230,7 +235,7 @@ app.post("/print-ticket", async (req, res) => {
             await printDirectToUsb(printer);
         }
 
-        res.send({ success: true });
+        res.send({ success: true, ticketNumber: sequence });
     } catch (error) {
         console.error("Error en endpoint /print-ticket:", error);
         res.status(500).send({ error: error.message });

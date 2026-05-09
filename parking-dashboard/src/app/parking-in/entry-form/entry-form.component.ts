@@ -57,7 +57,13 @@ export class EntryFormComponent {
       this.foundSubscriber.set(null);
       
       // Impresión nativa (Node.js)
-      this.printer.printTicket(v, 'entry');
+      const printResult = await this.printer.printTicket(v, 'entry');
+      if (printResult.success && printResult.ticketNumber) {
+        await this.parking.updateTicketNumber(v.id, printResult.ticketNumber);
+        // Actualizar el objeto local para que se muestre en el ticket visual si es necesario
+        v.ticketNumber = printResult.ticketNumber;
+        this.lastVehicle.set({ ...v });
+      }
       
       setTimeout(() => {
         this.success.set(null);

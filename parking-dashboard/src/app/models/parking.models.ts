@@ -25,5 +25,6 @@ export interface Vehicle {
   type: VehicleType;
   plate?: string;
   checkedInAt: Date;
-  isSubscriber?: boolean; // Nuevo campo
+  isSubscriber?: boolean;
+  ticketNumber?: string;
 }

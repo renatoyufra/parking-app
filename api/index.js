@@ -183,7 +183,7 @@ app.get("/vehicles", async (req, res) => {
 
 // 2. Registrar Entrada (Check-In)
 app.post("/vehicles/check-in", async (req, res) => {
-    const { plate, type } = req.body;
+    const { plate, type, ticketNumber } = req.body;
     if (!type) return res.status(400).json({ error: "Type is required" });
 
     const id = uuidv4().slice(0, 8).toUpperCase();
@@ -204,8 +204,8 @@ app.post("/vehicles/check-in", async (req, res) => {
         const localISOTime = getLocalISOString();
 
         await db.execute({
-            sql: "INSERT INTO parked_vehicles (id, plate, type, is_subscriber, entry_time) VALUES (?, ?, ?, ?, ?)",
-            args: [id, normalizedPlate, type, isSub, localISOTime],
+            sql: "INSERT INTO parked_vehicles (id, plate, type, is_subscriber, entry_time, ticket_number) VALUES (?, ?, ?, ?, ?, ?)",
+            args: [id, normalizedPlate, type, isSub, localISOTime, ticketNumber],
         });
 
         const row = await db.execute({
@@ -214,6 +214,22 @@ app.post("/vehicles/check-in", async (req, res) => {
         });
 
         res.status(201).json(row.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 2.5 Actualizar número de ticket
+app.put("/vehicles/:id/ticket-number", async (req, res) => {
+    const { id } = req.params;
+    const { ticketNumber } = req.body;
+
+    try {
+        await db.execute({
+            sql: "UPDATE parked_vehicles SET ticket_number = ? WHERE id = ?",
+            args: [ticketNumber, id],
+        });
+        res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -277,8 +293,8 @@ app.post("/vehicles/check-out", async (req, res) => {
         // Registrar movimiento (el ingreso a caja)
         await db.execute({
             sql: `INSERT INTO movements 
-            (vehicle_id, plate, vehicle_type, entry_time, exit_time, duration_minutes, amount_paid, is_subscriber) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            (vehicle_id, plate, vehicle_type, entry_time, exit_time, duration_minutes, amount_paid, is_subscriber, ticket_number) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             args: [
                 vehicle.id,
                 vehicle.plate,
@@ -288,6 +304,7 @@ app.post("/vehicles/check-out", async (req, res) => {
                 durationMinutes,
                 totalFee,
                 vehicle.is_subscriber,
+                vehicle.ticket_number,
             ],
         });
 

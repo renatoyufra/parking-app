@@ -43,8 +43,22 @@ export class ParkingService {
       // La BD devuelve 'entry_time' en UTC string
       checkedInAt: new Date(v.entry_time), 
       // La BD devuelve 'is_subscriber' (0 o 1)
-      isSubscriber: Boolean(v.is_subscriber)
+      isSubscriber: Boolean(v.is_subscriber),
+      ticketNumber: v.ticket_number
     };
+  }
+
+  // ... (existing code)
+
+  async updateTicketNumber(id: string, ticketNumber: string): Promise<void> {
+    try {
+      await firstValueFrom(this.http.put(`${API_URL}/vehicles/${id}/ticket-number`, { ticketNumber }));
+      this.vehiclesSig.update(vehicles => 
+        vehicles.map(v => v.id === id ? { ...v, ticketNumber } : v)
+      );
+    } catch (e) {
+      console.error('Error updating ticket number', e);
+    }
   }
 
   async loadVehicles() {

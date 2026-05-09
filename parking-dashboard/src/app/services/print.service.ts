@@ -8,7 +8,7 @@ export class PrintService {
   private apiUrl = 'http://localhost:3000/print-ticket';
   private cashReportUrl = 'http://localhost:3000/print-cash-report';
 
-  async printTicket(vehicle: Vehicle, type: 'entry' | 'exit', exitInfo?: { duration: number, fee: number }) {
+  async printTicket(vehicle: Vehicle, type: 'entry' | 'exit', exitInfo?: { duration: number, fee: number }): Promise<{ success: boolean, ticketNumber?: string }> {
     try {
       const response = await fetch(this.apiUrl, {
         method: 'POST',
@@ -24,12 +24,12 @@ export class PrintService {
 
       const result = await response.json();
       console.log('Ticket enviado correctamente:', result);
-      return true;
+      return { success: true, ticketNumber: result.ticketNumber };
     } catch (error) {
       console.error('Error de impresión nativa:', error);
       // Fallback: Si el servidor de impresión no está, usamos el navegador
       window.print();
-      return false;
+      return { success: false };
     }
   }
 

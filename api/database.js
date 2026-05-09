@@ -52,7 +52,8 @@ async function initDb() {
             plate TEXT,
             type TEXT NOT NULL,
             entry_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-            is_subscriber BOOLEAN DEFAULT 0
+            is_subscriber BOOLEAN DEFAULT 0,
+            ticket_number TEXT
         )`);
 
         // 2. Tabla de Tarifas
@@ -102,7 +103,8 @@ async function initDb() {
             duration_minutes INTEGER,
             amount_paid REAL,
             is_subscriber BOOLEAN DEFAULT 0,
-            payment_method TEXT DEFAULT 'cash'
+            payment_method TEXT DEFAULT 'cash',
+            ticket_number TEXT
         )`);
 
         // 5. Categorías de Gastos
@@ -143,6 +145,18 @@ async function initDb() {
         await db.execute(
             "UPDATE movements SET plate = UPPER(plate) WHERE plate IS NOT NULL"
         );
+
+        // Migración: Agregar ticket_number si no existe
+        try {
+            await db.execute("ALTER TABLE parked_vehicles ADD COLUMN ticket_number TEXT");
+        } catch (e) {
+            // Ignorar si la columna ya existe
+        }
+        try {
+            await db.execute("ALTER TABLE movements ADD COLUMN ticket_number TEXT");
+        } catch (e) {
+            // Ignorar si la columna ya existe
+        }
 
         console.log("Database initialized successfully with Turso/LibSQL");
     } catch (e) {
