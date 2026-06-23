@@ -16,7 +16,7 @@ export class AuthService {
 
   constructor() {
     if (isPlatformBrowser(this.platformId)) {
-      const token = localStorage.getItem(TOKEN_KEY);
+      const token = sessionStorage.getItem(TOKEN_KEY);
       if (token) this.tokenSig.set(token);
     }
   }
@@ -31,7 +31,7 @@ export class AuthService {
     if (!result?.token) return false;
     this.tokenSig.set(result.token);
     if (isPlatformBrowser(this.platformId)) {
-      localStorage.setItem(TOKEN_KEY, result.token);
+      sessionStorage.setItem(TOKEN_KEY, result.token);
     }
     return true;
   }
@@ -39,7 +39,7 @@ export class AuthService {
   logout() {
     this.tokenSig.set(null);
     if (isPlatformBrowser(this.platformId)) {
-      localStorage.removeItem(TOKEN_KEY);
+      sessionStorage.removeItem(TOKEN_KEY);
     }
   }
 }

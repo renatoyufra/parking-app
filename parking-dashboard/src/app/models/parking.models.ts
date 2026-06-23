@@ -9,15 +9,16 @@ export interface ParkingRates {
 export type VehicleRates = Record<VehicleType, ParkingRates>;
 
 export interface Subscriber {
-  id: string;
-  name: string;
-  plate: string;
-  type: VehicleType;
-  startDate: Date;
-  endDate: Date;
-  monthlyFee: number;
-  balanceDue: number;
-  active: boolean;
+    id: string;
+    name: string;
+    plate: string;
+    type: VehicleType;
+    startDate: Date;
+    endDate: Date;
+    monthlyFee: number;
+    balanceDue: number;
+    active: boolean;
+    lastBilledDate?: Date;
 }
 
 export interface Vehicle {
