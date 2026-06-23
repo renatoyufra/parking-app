@@ -380,10 +380,70 @@ app.put("/rates", async (req, res) => {
     }
 });
 
+// --- FUNCION AYUDA para facturación mensual de abonados
+async function processMonthlyBilling() {
+    try {
+        const today = getLocalDayString();
+        const todayDate = new Date(today);
+        
+        // Obtener todos los abonados activos
+        const subs = (await db.execute("SELECT * FROM subscribers WHERE active = 1")).rows;
+        
+        for (const sub of subs) {
+            let lastBilledDate = sub.last_billed_date ? new Date(sub.last_billed_date) : null;
+            
+            // Si no hay fecha de última facturación, usar start_date
+            if (!lastBilledDate) {
+                lastBilledDate = new Date(sub.start_date);
+            }
+            
+            // Calcular cuántos meses han pasado desde la última facturación
+            let monthsToBill = 0;
+            let currentCheckDate = new Date(lastBilledDate);
+            currentCheckDate.setDate(1); // Empezar desde el primer día del mes de la última facturación
+            
+            while (true) {
+                // Mover al siguiente mes
+                currentCheckDate.setMonth(currentCheckDate.getMonth() + 1);
+                
+                // Si la fecha de chequeo está después de hoy, salir del bucle
+                if (currentCheckDate > todayDate) {
+                    break;
+                }
+                
+                // Verificar que la fecha de chequeo está dentro del rango de vigencia del abonado
+                const endDate = new Date(sub.end_date);
+                if (currentCheckDate > endDate) {
+                    break;
+                }
+                
+                monthsToBill++;
+            }
+            
+            // Si hay meses para facturar, actualizar balance y última fecha de facturación
+            if (monthsToBill > 0) {
+                const additionalBalance = Number(sub.monthly_fee || 0) * monthsToBill;
+                const newBalanceDue = Number(sub.balance_due || 0) + additionalBalance;
+                const newLastBilled = new Date(todayDate.getFullYear(), todayDate.getMonth(), 1); // Primer día del mes actual
+                
+                await db.execute({
+                    sql: "UPDATE subscribers SET balance_due = ?, last_billed_date = ? WHERE id = ?",
+                    args: [newBalanceDue, newLastBilled.toISOString().split('T')[0], sub.id],
+                });
+            }
+        }
+    } catch (err) {
+        console.error("Error al procesar facturación mensual:", err);
+    }
+}
+
 // --- ENDPOINTS ABONADOS ---
 
 app.get("/subscribers", async (req, res) => {
     try {
+        // Primero procesar facturación mensual
+        await processMonthlyBilling();
+        
         const result = await db.execute("SELECT * FROM subscribers");
         // Mapear snake_case a camelCase para el frontend
         const mapped = result.rows.map(r => ({
@@ -395,7 +455,8 @@ app.get("/subscribers", async (req, res) => {
             endDate: r.end_date ? r.end_date.split('T')[0] : null,
             monthlyFee: r.monthly_fee || 0,
             balanceDue: r.balance_due || 0,
-            active: Boolean(r.active)
+            active: Boolean(r.active),
+            lastBilledDate: r.last_billed_date ? r.last_billed_date.split('T')[0] : null
         }));
         res.json(mapped);
     } catch (err) {
@@ -409,11 +470,14 @@ app.post("/subscribers", async (req, res) => {
     try {
         const normalizedPlate =
             typeof plate === "string" ? plate.trim().toUpperCase() : "";
+        
+        // Establecer last_billed_date como start_date al crear un nuevo abonado
+        const lastBilledDate = startDate;
 
         await db.execute({
-            sql: `INSERT INTO subscribers (id, name, plate, vehicle_type, start_date, end_date, monthly_fee, balance_due, active) 
-                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)`,
-            args: [id, name, normalizedPlate, type, startDate, endDate, monthlyFee || 0, balanceDue || 0],
+            sql: `INSERT INTO subscribers (id, name, plate, vehicle_type, start_date, end_date, monthly_fee, balance_due, active, last_billed_date) 
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?)`,
+            args: [id, name, normalizedPlate, type, startDate, endDate, monthlyFee || 0, balanceDue || 0, lastBilledDate],
         });
 
         const row = await db.execute({
@@ -430,7 +494,8 @@ app.post("/subscribers", async (req, res) => {
             endDate: r.end_date ? r.end_date.split('T')[0] : null,
             monthlyFee: r.monthly_fee,
             balanceDue: r.balance_due,
-            active: Boolean(r.active)
+            active: Boolean(r.active),
+            lastBilledDate: r.last_billed_date ? r.last_billed_date.split('T')[0] : null
         });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -465,7 +530,8 @@ app.put("/subscribers/:id", async (req, res) => {
             endDate: r.end_date ? r.end_date.split('T')[0] : null,
             monthlyFee: r.monthly_fee,
             balanceDue: r.balance_due,
-            active: Boolean(r.active)
+            active: Boolean(r.active),
+            lastBilledDate: r.last_billed_date ? r.last_billed_date.split('T')[0] : null
         });
     } catch (err) {
         res.status(500).json({ error: err.message });

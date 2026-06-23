@@ -89,7 +89,8 @@ async function initDb() {
             monthly_fee REAL DEFAULT 0,
             balance_due REAL DEFAULT 0,
             active BOOLEAN DEFAULT 1,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            last_billed_date DATE
         )`);
 
         // 4. Registro de Movimientos
@@ -154,6 +155,13 @@ async function initDb() {
         }
         try {
             await db.execute("ALTER TABLE movements ADD COLUMN ticket_number TEXT");
+        } catch (e) {
+            // Ignorar si la columna ya existe
+        }
+
+        // Migración: Agregar last_billed_date a subscribers si no existe
+        try {
+            await db.execute("ALTER TABLE subscribers ADD COLUMN last_billed_date DATE");
         } catch (e) {
             // Ignorar si la columna ya existe
         }
