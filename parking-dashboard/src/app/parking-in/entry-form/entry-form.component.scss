@@ -190,6 +190,59 @@ input {
   }
 }
 
+.prepaid-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  .section-label {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  .prepaid-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    .prepaid-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px;
+      background: #fff;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 500;
+      color: #4b5563;
+
+      &:hover {
+        border-color: #94a3b8;
+        background: #f8fafc;
+      }
+
+      &.selected {
+        border-color: #2563eb;
+        background: #eff6ff;
+        color: #2563eb;
+        box-shadow: 0 0 0 1px #2563eb;
+      }
+
+      .label {
+        font-size: 1rem;
+      }
+
+      .price {
+        font-size: 1.1rem;
+        font-weight: 700;
+      }
+    }
+  }
+}
+
 #print-section {
   display: none;
 }

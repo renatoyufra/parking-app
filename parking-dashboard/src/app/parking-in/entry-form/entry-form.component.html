@@ -2,10 +2,25 @@
   <div class="vehicle-type-selector">
     @for (type of vehicleTypes; track type) {
       <label class="vehicle-card" [class.selected]="form.get('type')?.value === type">
-        <input type="radio" formControlName="type" [value]="type" class="sr-only">
+        <input type="radio" formControlName="type" [value]="type" class="sr-only" (change)="onPrepaidChange()">
         <span class="label">{{ type | titlecase }}</span>
       </label>
     }
+  </div>
+  
+  <div class="prepaid-selector">
+    <label class="section-label">Tipo de Pago</label>
+    <div class="prepaid-options">
+      @for (option of prepaidOptions; track option.value) {
+        <label class="prepaid-card" [class.selected]="form.get('prepaidType')?.value === option.value">
+          <input type="radio" formControlName="prepaidType" [value]="option.value" class="sr-only" (change)="onPrepaidChange()">
+          <span class="label">{{ option.label }}</span>
+          @if (option.value !== 'none') {
+            <span class="price">S/ {{ getPrepaidPrice(option.value) | number:'1.2-2' }}</span>
+          }
+        </label>
+      }
+    </div>
   </div>
   
   <div class="form-row">

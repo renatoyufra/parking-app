@@ -28,9 +28,16 @@ export class EntryFormComponent {
   form = this.fb.group({
     type: this.fb.control<VehicleType>('auto', { nonNullable: true, validators: [Validators.required] }),
     plate: this.fb.control<string>('', { nonNullable: true }),
+    prepaidType: this.fb.control<string>('none', { nonNullable: true }),
+    prepaidPaid: this.fb.control<number>(0, { nonNullable: true }),
   });
 
   vehicleTypes: VehicleType[] = ['auto', 'camioneta', 'camion'];
+  prepaidOptions = [
+    { value: 'none', label: 'Sin Prepago', price: 0 },
+    { value: '12night', label: 'Prepago 12 Horas Nocturnas', priceKey: 'prepaid12Night' },
+    { value: '24hours', label: 'Prepago 24 Horas', priceKey: 'prepaid24Hours' }
+  ];
 
   checkSubscriber() {
     const plate = this.form.get('plate')?.value;
@@ -45,15 +52,39 @@ export class EntryFormComponent {
     }
   }
 
+  getPrepaidPrice(type: string): number {
+    const vehicleType = this.form.get('type')?.value;
+    if (!vehicleType) return 0;
+    const rates = this.parking.rates()[vehicleType];
+    if (type === '12night') return rates.prepaid12Night;
+    if (type === '24hours') return rates.prepaid24Hours;
+    return 0;
+  }
+
+  onPrepaidChange() {
+    const prepaidType = this.form.get('prepaidType')?.value;
+    if (prepaidType && prepaidType !== 'none') {
+      const price = this.getPrepaidPrice(prepaidType);
+      this.form.patchValue({ prepaidPaid: price });
+    } else {
+      this.form.patchValue({ prepaidPaid: 0 });
+    }
+  }
+
   async submit() {
-    const { type, plate } = this.form.getRawValue();
+    const { type, plate, prepaidType, prepaidPaid } = this.form.getRawValue();
     if (!type) return;
     this.submitting.set(true);
     try {
-      const v = await this.parking.checkIn(type, plate?.trim().toUpperCase() || undefined);
+      const v = await this.parking.checkIn(
+        type, 
+        plate?.trim().toUpperCase() || undefined,
+        prepaidType,
+        prepaidPaid
+      );
       this.lastVehicle.set(v);
       this.success.set(`Registrado: ${v.type.toUpperCase()} ${v.plate ?? ''}`.trim());
-      this.form.patchValue({ plate: '' });
+      this.form.patchValue({ plate: '', prepaidType: 'none', prepaidPaid: 0 });
       this.foundSubscriber.set(null);
       
       // Impresión nativa (Node.js)

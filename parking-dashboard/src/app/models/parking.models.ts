@@ -1,9 +1,12 @@
 export type VehicleType = 'auto' | 'camioneta' | 'camion';
+export type PrepaidType = 'none' | '12night' | '24hours';
 
 export interface ParkingRates {
   firstHour: number;
   secondHour: number;
   toleranceMinutes: number;
+  prepaid12Night: number;
+  prepaid24Hours: number;
 }
 
 export type VehicleRates = Record<VehicleType, ParkingRates>;
@@ -28,4 +31,6 @@ export interface Vehicle {
   checkedInAt: Date;
   isSubscriber?: boolean;
   ticketNumber?: string;
+  prepaidType?: PrepaidType;
+  prepaidPaid?: number;
 }

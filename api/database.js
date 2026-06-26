@@ -53,7 +53,9 @@ async function initDb() {
             type TEXT NOT NULL,
             entry_time DATETIME DEFAULT CURRENT_TIMESTAMP,
             is_subscriber BOOLEAN DEFAULT 0,
-            ticket_number TEXT
+            ticket_number TEXT,
+            prepaid_type TEXT DEFAULT 'none',
+            prepaid_paid REAL DEFAULT 0
         )`);
 
         // 2. Tabla de Tarifas
@@ -61,19 +63,21 @@ async function initDb() {
             vehicle_type TEXT PRIMARY KEY,
             first_hour REAL NOT NULL,
             second_hour REAL NOT NULL,
-            tolerance_minutes INTEGER NOT NULL
+            tolerance_minutes INTEGER NOT NULL,
+            prepaid_12_night REAL NOT NULL DEFAULT 0,
+            prepaid_24_hours REAL NOT NULL DEFAULT 0
         )`);
 
         // Insertar tarifas por defecto si no existen
         const defaultRates = [
-            { type: "auto", args: [1000, 800, 10] },
-            { type: "camioneta", args: [1500, 1200, 10] },
-            { type: "camion", args: [2500, 2000, 10] },
+            { type: "auto", args: [1000, 800, 10, 5000, 8000] },
+            { type: "camioneta", args: [1500, 1200, 10, 7500, 12000] },
+            { type: "camion", args: [2500, 2000, 10, 12500, 20000] },
         ];
 
         for (const rate of defaultRates) {
             await db.execute({
-                sql: "INSERT OR IGNORE INTO rates (vehicle_type, first_hour, second_hour, tolerance_minutes) VALUES (?, ?, ?, ?)",
+                sql: "INSERT OR IGNORE INTO rates (vehicle_type, first_hour, second_hour, tolerance_minutes, prepaid_12_night, prepaid_24_hours) VALUES (?, ?, ?, ?, ?, ?)",
                 args: [rate.type, ...rate.args],
             });
         }
@@ -162,6 +166,30 @@ async function initDb() {
         // Migración: Agregar last_billed_date a subscribers si no existe
         try {
             await db.execute("ALTER TABLE subscribers ADD COLUMN last_billed_date DATE");
+        } catch (e) {
+            // Ignorar si la columna ya existe
+        }
+        
+        // Migración: Agregar campos de prepago a parked_vehicles si no existen
+        try {
+            await db.execute("ALTER TABLE parked_vehicles ADD COLUMN prepaid_type TEXT DEFAULT 'none'");
+        } catch (e) {
+            // Ignorar si la columna ya existe
+        }
+        try {
+            await db.execute("ALTER TABLE parked_vehicles ADD COLUMN prepaid_paid REAL DEFAULT 0");
+        } catch (e) {
+            // Ignorar si la columna ya existe
+        }
+        
+        // Migración: Agregar campos de prepago a rates si no existen
+        try {
+            await db.execute("ALTER TABLE rates ADD COLUMN prepaid_12_night REAL NOT NULL DEFAULT 0");
+        } catch (e) {
+            // Ignorar si la columna ya existe
+        }
+        try {
+            await db.execute("ALTER TABLE rates ADD COLUMN prepaid_24_hours REAL NOT NULL DEFAULT 0");
         } catch (e) {
             // Ignorar si la columna ya existe
         }

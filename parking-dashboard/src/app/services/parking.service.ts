@@ -9,9 +9,9 @@ import { isPlatformBrowser } from '@angular/common';
 const API_URL = 'http://localhost:4000';
 
 const DEFAULT_RATES: VehicleRates = {
-  auto: { firstHour: 1000, secondHour: 800, toleranceMinutes: 10 },
-  camioneta: { firstHour: 1500, secondHour: 1200, toleranceMinutes: 10 },
-  camion: { firstHour: 2500, secondHour: 2000, toleranceMinutes: 10 }
+  auto: { firstHour: 1000, secondHour: 800, toleranceMinutes: 10, prepaid12Night: 5000, prepaid24Hours: 8000 },
+  camioneta: { firstHour: 1500, secondHour: 1200, toleranceMinutes: 10, prepaid12Night: 7500, prepaid24Hours: 12000 },
+  camion: { firstHour: 2500, secondHour: 2000, toleranceMinutes: 10, prepaid12Night: 12500, prepaid24Hours: 20000 }
 };
 
 @Injectable({ providedIn: 'root' })
@@ -44,7 +44,9 @@ export class ParkingService {
       checkedInAt: new Date(v.entry_time), 
       // La BD devuelve 'is_subscriber' (0 o 1)
       isSubscriber: Boolean(v.is_subscriber),
-      ticketNumber: v.ticket_number
+      ticketNumber: v.ticket_number,
+      prepaidType: v.prepaid_type,
+      prepaidPaid: v.prepaid_paid
     };
   }
 
@@ -93,8 +95,8 @@ export class ParkingService {
     }
   }
 
-  async checkIn(type: VehicleType, plate?: string): Promise<Vehicle> {
-    const rawVehicle = await firstValueFrom(this.http.post<any>(`${API_URL}/vehicles/check-in`, { type, plate }));
+  async checkIn(type: VehicleType, plate?: string, prepaidType?: string, prepaidPaid?: number): Promise<Vehicle> {
+    const rawVehicle = await firstValueFrom(this.http.post<any>(`${API_URL}/vehicles/check-in`, { type, plate, prepaidType, prepaidPaid }));
     const vehicle = this.mapVehicle(rawVehicle);
     this.vehiclesSig.update(v => [...v, vehicle]);
     this.expenses.loadSummary(); // Refrescar contador de estacionados si el summary lo usa
@@ -139,6 +141,42 @@ export class ParkingService {
 
     const vehicleRates = this.rates()[vehicle.type];
     
+    // Caso de prepago
+    if (vehicle.prepaidType && vehicle.prepaidType !== 'none' && vehicle.prepaidPaid) {
+      let prepaidMinutes = 0;
+      if (vehicle.prepaidType === '12night') {
+        prepaidMinutes = 12 * 60; // 12 horas
+      } else if (vehicle.prepaidType === '24hours') {
+        prepaidMinutes = 24 * 60; // 24 horas
+      }
+      
+      if (durationMinutes <= prepaidMinutes) {
+        return { durationMinutes, totalFee: vehicle.prepaidPaid };
+      } else {
+        // Calcular tarifas normales para el tiempo extra
+        const extraMinutes = durationMinutes - prepaidMinutes;
+        let extraFee = 0;
+        
+        if (extraMinutes > 0) {
+          if (extraMinutes <= 60) {
+            extraFee = vehicleRates.firstHour;
+          } else {
+            extraFee = vehicleRates.firstHour;
+            let remainingExtraMinutes = extraMinutes - 60;
+            while (remainingExtraMinutes > 0) {
+              if (remainingExtraMinutes > vehicleRates.toleranceMinutes) {
+                extraFee += vehicleRates.secondHour;
+              }
+              remainingExtraMinutes -= 60;
+            }
+          }
+        }
+        
+        return { durationMinutes, totalFee: vehicle.prepaidPaid + extraFee };
+      }
+    }
+    
+    // Caso normal (sin prepago)
     if (durationMinutes === 0) {
       return { durationMinutes, totalFee: 0 };
     }

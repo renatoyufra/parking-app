@@ -183,7 +183,7 @@ app.get("/vehicles", async (req, res) => {
 
 // 2. Registrar Entrada (Check-In)
 app.post("/vehicles/check-in", async (req, res) => {
-    const { plate, type, ticketNumber } = req.body;
+    const { plate, type, ticketNumber, prepaidType, prepaidPaid } = req.body;
     if (!type) return res.status(400).json({ error: "Type is required" });
 
     const id = uuidv4().slice(0, 8).toUpperCase();
@@ -204,7 +204,7 @@ app.post("/vehicles/check-in", async (req, res) => {
         const localISOTime = getLocalISOString();
 
         await db.execute({
-            sql: "INSERT INTO parked_vehicles (id, plate, type, is_subscriber, entry_time, ticket_number) VALUES (?, ?, ?, ?, ?, ?)",
+            sql: "INSERT INTO parked_vehicles (id, plate, type, is_subscriber, entry_time, ticket_number, prepaid_type, prepaid_paid) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             args: [
                 id,
                 normalizedPlate,
@@ -212,6 +212,8 @@ app.post("/vehicles/check-in", async (req, res) => {
                 isSub,
                 localISOTime,
                 ticketNumber ?? null,
+                prepaidType || 'none',
+                prepaidPaid || 0,
             ],
         });
 
@@ -269,7 +271,47 @@ app.post("/vehicles/check-out", async (req, res) => {
 
         let totalFee = 0;
 
-        if (!vehicle.is_subscriber) {
+        if (vehicle.is_subscriber) {
+            // Caso Abonado: el totalFee es lo que decida pagar de su deuda (paymentAmount)
+            totalFee = Number(paymentAmount) || 0;
+            
+            // Si pagó algo, descontar de su balance_due
+            if (totalFee > 0 && vehicle.plate) {
+                await db.execute({
+                    sql: "UPDATE subscribers SET balance_due = MAX(0, balance_due - ?) WHERE UPPER(plate) = ? AND active = 1",
+                    args: [totalFee, vehicle.plate.toUpperCase()],
+                });
+            }
+        } else if (vehicle.prepaid_type && vehicle.prepaid_type !== 'none' && vehicle.prepaid_paid) {
+            // Caso Prepagado
+            totalFee = Number(vehicle.prepaid_paid);
+            let prepaidMinutes = 0;
+            
+            if (vehicle.prepaid_type === '12night') {
+                prepaidMinutes = 12 * 60;
+            } else if (vehicle.prepaid_type === '24hours') {
+                prepaidMinutes = 24 * 60;
+            }
+            
+            // Si se pasó del tiempo prepagado, agregar tarifas normales
+            if (durationMinutes > prepaidMinutes) {
+                const extraMinutes = durationMinutes - prepaidMinutes;
+                
+                if (extraMinutes <= 60) {
+                    totalFee += rate.first_hour;
+                } else {
+                    totalFee += rate.first_hour;
+                    let remainingExtraMinutes = extraMinutes - 60;
+                    while (remainingExtraMinutes > 0) {
+                        if (remainingExtraMinutes > rate.tolerance_minutes) {
+                            totalFee += rate.second_hour;
+                        }
+                        remainingExtraMinutes -= 60;
+                    }
+                }
+            }
+        } else {
+            // Caso Normal
             if (durationMinutes <= 60) {
                 totalFee = rate.first_hour;
             } else {
@@ -281,17 +323,6 @@ app.post("/vehicles/check-out", async (req, res) => {
                     }
                     remainingMinutes -= 60;
                 }
-            }
-        } else {
-            // Caso Abonado: el totalFee es lo que decida pagar de su deuda (paymentAmount)
-            totalFee = Number(paymentAmount) || 0;
-            
-            // Si pagó algo, descontar de su balance_due
-            if (totalFee > 0 && vehicle.plate) {
-                await db.execute({
-                    sql: "UPDATE subscribers SET balance_due = MAX(0, balance_due - ?) WHERE UPPER(plate) = ? AND active = 1",
-                    args: [totalFee, vehicle.plate.toUpperCase()],
-                });
             }
         }
 
@@ -356,6 +387,8 @@ app.get("/rates", async (req, res) => {
                 firstHour: r.first_hour,
                 secondHour: r.second_hour,
                 toleranceMinutes: r.tolerance_minutes,
+                prepaid12Night: r.prepaid_12_night,
+                prepaid24Hours: r.prepaid_24_hours,
             };
         });
         res.json(ratesObj);
@@ -370,8 +403,8 @@ app.put("/rates", async (req, res) => {
         for (const type of Object.keys(rates)) {
             const r = rates[type];
             await db.execute({
-                sql: "UPDATE rates SET first_hour = ?, second_hour = ?, tolerance_minutes = ? WHERE vehicle_type = ?",
-                args: [r.firstHour, r.secondHour, r.toleranceMinutes, type],
+                sql: "UPDATE rates SET first_hour = ?, second_hour = ?, tolerance_minutes = ?, prepaid_12_night = ?, prepaid_24_hours = ? WHERE vehicle_type = ?",
+                args: [r.firstHour, r.secondHour, r.toleranceMinutes, r.prepaid12Night || 0, r.prepaid24Hours || 0, type],
             });
         }
         res.json({ success: true });

@@ -30,7 +30,9 @@ export class RatesComponent {
       group[type] = this.fb.group({
         firstHour: [currentRates[type].firstHour],
         secondHour: [currentRates[type].secondHour],
-        toleranceMinutes: [currentRates[type].toleranceMinutes]
+        toleranceMinutes: [currentRates[type].toleranceMinutes],
+        prepaid12Night: [currentRates[type].prepaid12Night],
+        prepaid24Hours: [currentRates[type].prepaid24Hours]
       });
     });
     
