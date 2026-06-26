@@ -1,17 +1,17 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ParkingService } from '../services/parking.service';
-import { VehicleType } from '../models/parking.models';
+import { VehicleType, Vehicle } from '../models/parking.models';
 import { EntryFormComponent } from '../parking-in/entry-form/entry-form.component';
 import { ExitFormComponent } from '../parking-out/exit-form/exit-form.component';
-import { ConfirmModalComponent } from '../shared/components/confirm-modal/confirm-modal.component';
 import { ExpensesService } from '../services/expenses.service';
 import { CURRENCY_SYMBOL } from '../config';
+import { ParkedVehiclesListComponent } from '../parking-in/parked-vehicles-list/parked-vehicles-list.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, EntryFormComponent, ExitFormComponent, ConfirmModalComponent],
+  imports: [CommonModule, EntryFormComponent, ExitFormComponent, ParkedVehiclesListComponent],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
 })
@@ -19,14 +19,10 @@ export class DashboardComponent {
   private parking = inject(ParkingService);
   private expensesService = inject(ExpensesService);
 
-  // Modal state
-  showConfirmDelete = signal(false);
-  vehicleToDelete = signal<string | null>(null);
-
   // Sidebar UI state without Material
   sidebarOpen = signal(true);
   toggleSidebar() {
-    this.sidebarOpen.update((v) => !v);
+    this.sidebarOpen.update((v: boolean) => !v);
   }
 
   // Data signals
@@ -47,21 +43,11 @@ export class DashboardComponent {
     this.expensesService.loadSummary();
   }
 
-  async requestDeleteVehicle(id: string) {
-    this.vehicleToDelete.set(id);
-    this.showConfirmDelete.set(true);
+  async handleDeleteVehicle(id: string) {
+    await this.parking.deleteVehicle(id);
   }
 
-  async confirmDeleteVehicle() {
-    const id = this.vehicleToDelete();
-    if (id) {
-      await this.parking.deleteVehicle(id);
-    }
-    this.closeModal();
-  }
-
-  closeModal() {
-    this.showConfirmDelete.set(false);
-    this.vehicleToDelete.set(null);
+  handleReprintTicket(vehicle: Vehicle) {
+    // If needed, add reprint logic here
   }
 }

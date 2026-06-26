@@ -1,0 +1,245 @@
+:host { display: block; }
+
+.vehicles-list-container {
+  margin-top: 2rem;
+  h2 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    color: #374151;
+  }
+}
+
+.vehicles-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.vehicle-item-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px 16px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: #d1d5db;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+
+  &.prepaid-12night {
+    border-left: 4px solid #8b5cf6;
+    background: linear-gradient(to right, #faf5ff, #ffffff);
+  }
+
+  &.prepaid-24hours {
+    border-left: 4px solid #059669;
+    background: linear-gradient(to right, #ecfdf5, #ffffff);
+  }
+
+  .vehicle-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+
+    .vehicle-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .type-badge {
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-weight: 600;
+      text-transform: uppercase;
+
+      &.auto { background: #dbeafe; color: #1e40af; }
+      &.camioneta { background: #fef3c7; color: #92400e; }
+      &.camion { background: #fee2e2; color: #991b1b; }
+    }
+
+    .payment-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .prepaid-badge {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 700;
+      text-transform: uppercase;
+
+      &.prepaid-type-12night {
+        background: #f3e8ff;
+        color: #7c3aed;
+        border: 1px solid #ddd6fe;
+      }
+
+      &.prepaid-type-24hours {
+        background: #dcfce7;
+        color: #15803d;
+        border: 1px solid #bbf7d0;
+      }
+    }
+
+    .prepaid-amount {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: #1f2937;
+      background: #fef3c7;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .normal-badge {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      text-transform: uppercase;
+      background: #f3f4f6;
+      color: #6b7280;
+      border: 1px solid #e5e7eb;
+    }
+
+    .plate {
+      font-weight: 700;
+      font-family: monospace;
+      font-size: 1.1rem;
+      color: #1f2937;
+    }
+
+    .time {
+      color: #6b7280;
+      font-size: 0.875rem;
+    }
+  }
+}
+
+.btn-outline {
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+
+  &.sm {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+  }
+
+  &.danger {
+    border: 1px solid #ef4444;
+    color: #ef4444;
+    &:hover {
+      background: #ef4444;
+      color: #fff;
+    }
+  }
+
+  &.secondary {
+    border: 1px solid #6b7280;
+    color: #6b7280;
+    &:hover {
+      background: #6b7280;
+      color: #fff;
+    }
+  }
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: #9ca3af;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px dashed #d1d5db;
+}
+
+.btn-icon {
+  padding: 4px 6px;
+  border-radius: 4px;
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+
+  &.danger {
+    color: #ef4444;
+    border-color: #ef4444;
+
+    &:hover {
+      background: #ef4444;
+      color: white;
+    }
+  }
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+
+  thead {
+    th {
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #6b7280;
+      border-bottom: 2px solid #e5e7eb;
+    }
+
+    .text-right {
+      text-align: right;
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid #e5e7eb;
+      transition: background 0.2s ease;
+
+      &:hover {
+        background: #f9fafb;
+      }
+
+      td {
+        padding: 12px 16px;
+
+        .type-badge {
+          display: inline-block;
+        }
+      }
+
+      .text-right {
+        text-align: right;
+      }
+
+      .empty-msg {
+        color: #9ca3af;
+        padding: 2rem;
+      }
+    }
+  }
+}

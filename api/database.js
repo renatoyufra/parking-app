@@ -68,20 +68,6 @@ async function initDb() {
             prepaid_24_hours REAL NOT NULL DEFAULT 0
         )`);
 
-        // Insertar tarifas por defecto si no existen
-        const defaultRates = [
-            { type: "auto", args: [1000, 800, 10, 5000, 8000] },
-            { type: "camioneta", args: [1500, 1200, 10, 7500, 12000] },
-            { type: "camion", args: [2500, 2000, 10, 12500, 20000] },
-        ];
-
-        for (const rate of defaultRates) {
-            await db.execute({
-                sql: "INSERT OR IGNORE INTO rates (vehicle_type, first_hour, second_hour, tolerance_minutes, prepaid_12_night, prepaid_24_hours) VALUES (?, ?, ?, ?, ?, ?)",
-                args: [rate.type, ...rate.args],
-            });
-        }
-
         // 3. Tabla de Abonados
         await db.execute(`CREATE TABLE IF NOT EXISTS subscribers (
             id TEXT PRIMARY KEY,
@@ -192,6 +178,26 @@ async function initDb() {
             await db.execute("ALTER TABLE rates ADD COLUMN prepaid_24_hours REAL NOT NULL DEFAULT 0");
         } catch (e) {
             // Ignorar si la columna ya existe
+        }
+
+        // Insertar tarifas por defecto si no existen
+        const defaultRates = [
+            { type: "auto", args: [1000, 800, 10, 5000, 8000] },
+            { type: "camioneta", args: [1500, 1200, 10, 7500, 12000] },
+            { type: "camion", args: [2500, 2000, 10, 12500, 20000] },
+        ];
+
+        for (const rate of defaultRates) {
+            await db.execute({
+                sql: "INSERT OR IGNORE INTO rates (vehicle_type, first_hour, second_hour, tolerance_minutes, prepaid_12_night, prepaid_24_hours) VALUES (?, ?, ?, ?, ?, ?)",
+                args: [rate.type, ...rate.args],
+            });
+
+            // Actualizar tarifas existentes con los valores de prepago
+            await db.execute({
+                sql: "UPDATE rates SET prepaid_12_night = ?, prepaid_24_hours = ? WHERE vehicle_type = ?",
+                args: [rate.args[3], rate.args[4], rate.type],
+            });
         }
 
         console.log("Database initialized successfully with Turso/LibSQL");

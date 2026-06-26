@@ -1,0 +1,83 @@
+<div class="vehicles-list-container">
+  <h2>{{ title() }} ({{ vehicles().length }})</h2>
+  
+  @if (displayMode() === 'cards') {
+    <div class="vehicles-grid">
+      @for (v of vehicles(); track v.id) {
+        <div class="vehicle-item-card" [class.prepaid-12night]="v.prepaidType === '12night'" [class.prepaid-24hours]="v.prepaidType === '24hours'">
+          <div class="vehicle-info">
+            <div class="vehicle-header">
+              <span class="type-badge" [class]="v.type">{{ v.type | titlecase }}</span>
+              <div class="payment-info">
+                @if (v.prepaidType && v.prepaidType !== 'none') {
+                  <span class="prepaid-badge" [class.prepaid-type-12night]="v.prepaidType === '12night'" [class.prepaid-type-24hours]="v.prepaidType === '24hours'">{{ getPrepaidLabel(v.prepaidType) }}</span>
+                  <span class="prepaid-amount">{{ currency }}{{ v.prepaidPaid | number }}</span>
+                } @else {
+                  <span class="normal-badge">Tarifa Normal</span>
+                }
+              </div>
+            </div>
+            <span class="plate">{{ v.plate || 'SIN PLACA' }}</span>
+            <span class="time">{{ v.checkedInAt | date:'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+          <div class="actions">
+            <button class="btn-outline secondary sm" (click)="onReprintTicket.emit(v)">Ticket</button>
+            <button class="btn-icon danger" (click)="requestDeleteVehicle(v.id)" title="Eliminar por error">
+              <svg viewBox="0 0 24 24" width="14" height="14"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+            </button>
+            <button class="btn-outline danger sm" (click)="onCheckOut.emit(v.id)">Salida</button>
+          </div>
+        </div>
+      } @empty {
+        <div class="empty-state">No hay vehículos estacionados.</div>
+      }
+    </div>
+  } @else if (displayMode() === 'table') {
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Tipo</th>
+            <th>Placa</th>
+            <th>Pago</th>
+            <th>Ingreso</th>
+            <th class="text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (v of vehicles(); track v.id) {
+            <tr>
+              <td><span class="type-badge" [class]="v.type">{{ v.type | titlecase }}</span></td>
+              <td><strong>{{ v.plate || 'SIN PLACA' }}</strong></td>
+              <td>
+                @if (v.prepaidType && v.prepaidType !== 'none') {
+                  <span class="prepaid-badge" [class.prepaid-type-12night]="v.prepaidType === '12night'" [class.prepaid-type-24hours]="v.prepaidType === '24hours'">{{ getPrepaidLabel(v.prepaidType) }} ({{ currency }}{{ v.prepaidPaid | number }})</span>
+                } @else {
+                  <span class="normal-badge">Tarifa Normal</span>
+                }
+              </td>
+              <td>{{ v.checkedInAt | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td class="text-right">
+                <button class="btn-outline secondary sm" (click)="onReprintTicket.emit(v)">Ticket</button>
+                <button class="btn-icon danger" (click)="requestDeleteVehicle(v.id)" title="Eliminar por error">
+                  <svg viewBox="0 0 24 24" width="14" height="14"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="text-center empty-msg">No hay vehículos estacionados ahora.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+@if (showConfirmDelete()) {
+  <app-confirm-modal 
+    (onConfirm)="confirmDeleteVehicle()" 
+    (onCancel)="closeModal()">
+  </app-confirm-modal>
+}
